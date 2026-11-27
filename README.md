@@ -75,15 +75,18 @@ Una sola muestra, pocas obras, todo real en Stellar Testnet:
 contracts/        # Contrato Soroban de la subasta (Rust)
 web/              # Frontend: fichas de obra, QR, wallet, ofertas
 docs/             # Pitch, guion de demo, notas de validación con usuarios
-.devin/skills/    # Skills de Stellar para agentes de código (ver abajo)
-.devin/mcp_config.json  # Servidor MCP Stellar Raven (docs + ecosistema)
+AGENTS.md         # Contexto rápido para cualquier agente de código
+.devin/skills/    # Skills de Stellar (Devin)
+.devin/mcp_config.json  # MCP Stellar Raven (Devin)
+.cursor/skills/   # Mismas skills de Stellar (Cursor)
+.cursor/mcp.json  # MCP Stellar Raven (Cursor)
 ```
 
 ## Trabajar con agentes de código
 
-El repo incluye contexto de Stellar para que cualquier agente (Devin, Claude Code, Cursor, Codex) escriba código correcto desde el arranque. Fuente oficial: [skills.stellar.org](https://skills.stellar.org) y [raven.stellar.org](https://raven.stellar.org).
+El repo incluye contexto de Stellar para que cualquier agente (Devin, Cursor, Claude Code, Codex) escriba código correcto desde el arranque. `AGENTS.md` resume el proyecto; las skills viven en `.devin/skills/` (Devin) y espejadas en `.cursor/skills/` (Cursor). Fuente oficial: [skills.stellar.org](https://skills.stellar.org) y [raven.stellar.org](https://raven.stellar.org).
 
-### Skills instaladas (`.devin/skills/`)
+### Skills instaladas
 
 | Skill | Para qué la usamos |
 |---|---|
@@ -97,13 +100,11 @@ Disponibles en el mismo paquete por si el alcance cambia: `agentic-payments` (x4
 
 ### MCP: Stellar Raven
 
-`stellar-raven` está configurado en `.devin/mcp_config.json` y expone docs oficiales, datos vivos del ecosistema y playbooks — sin API keys, solo un login en el navegador:
+`stellar-raven` ya viene configurado para Devin (`.devin/mcp_config.json`) y Cursor (`.cursor/mcp.json`). Expone docs oficiales, datos vivos del ecosistema y playbooks — sin API keys, solo un login en el navegador **por usuario**:
 
-```bash
-devin mcp login stellar-raven   # una vez, abre el navegador para autorizar
-```
-
-(Otro agente: agregar `https://raven.stellar.org/mcp` como servidor HTTP y autenticar con OAuth.)
+- **Devin**: `devin mcp login stellar-raven`
+- **Cursor**: aceptar el servidor cuando aparece en Settings → MCP y firmar en el navegador
+- **Otro agente**: agregar `https://raven.stellar.org/mcp` como servidor HTTP y autenticar con OAuth
 
 ## Recursos
 
