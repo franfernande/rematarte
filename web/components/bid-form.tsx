@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState, type FormEvent } from "react";
 import { useWallet } from "@/components/wallet-provider";
 import { BidError, placeBid, type BidFailure, type BidStage } from "@/lib/bid";
@@ -17,6 +18,8 @@ const STAGE_TEXT: Record<BidStage, string> = {
   signing: "Firmá la oferta en tu wallet.",
   sending: "Enviando la oferta a la red…",
 };
+
+const NEEDS_SETUP: ReadonlyArray<BidFailure | "unknown"> = ["unfunded", "no-xlm", "no-trustline", "no-usdc"];
 
 function parseDraft(draft: string): bigint | undefined {
   try {
@@ -156,6 +159,11 @@ export function BidForm({
         {status.kind === "error" && (
           <p role="alert" className="border-l-2 border-ocre pl-3">
             {status.message}{" "}
+            {NEEDS_SETUP.includes(status.reason) && (
+              <Link href="/empezar" className="text-malbec underline underline-offset-2">
+                Preparar mi wallet
+              </Link>
+            )}
             {status.txHash && <TxLink deploy={deploy} hash={status.txHash} />}
           </p>
         )}

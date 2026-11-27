@@ -45,6 +45,7 @@ npm run bindings:sync
 
 - `/`: la muestra. Cada obra muestra la oferta actual o el precio base y cuánto falta (relee `list_auctions` cada 15 s).
 - `/obra/[slug]`: la ficha, que es adonde lleva el QR. Consulta los eventos nuevos cada 4 s y, cuando entra uno, relee la subasta (así se ven las extensiones del anti-sniping). Muestra el historial con cada reembolso y enlaces a stellar.expert. Cuando la pestaña no está visible, deja de consultar.
+- `/empezar`: onboarding del jurado en cuatro pasos (conectar wallet, XLM con Friendbot, trustline USDC y 100 USDC de prueba). Se puede retomar en cualquier paso: lee el estado real de la cuenta en Testnet.
 - `/qr`: hoja para imprimir, con un QR por obra. Los QR apuntan al dominio desde el que se abre la hoja, así que hay que imprimirla desde la URL pública (en localhost muestra un aviso).
 
 Los colores y las tipografías son los de la identidad de G3 (`docs/slides/`) y están definidos como tokens en `app/globals.css` (`cal`, `papel`, `tinta`, `piedra`, `linea`, `malbec`, `ocre`).
@@ -53,4 +54,12 @@ Los colores y las tipografías son los de la identidad de G3 (`docs/slides/`) y 
 
 `components/wallet-provider.tsx` expone `useWallet()` con `address`, `connect`, `disconnect` y `signTransaction`. Usa Stellar Wallets Kit v2 (desde JSR, ver `.npmrc`) con Albedo y Varial (ex Freighter), según la decisión D3.
 
-`components/bid-form.tsx` precarga la oferta mínima y delega la operación en `lib/bid.ts`. Antes de abrir la wallet, comprueba que la cuenta exista en Testnet y tenga XLM, trustline y USDC suficientes. Después simula `bid`, pide una sola firma, envía y espera la confirmación. Traduce a español el rechazo de firma, red equivocada, oferta superada, subasta cerrada, saldo insuficiente, transacción expirada y cuenta ocupada, y bloquea los envíos dobles. Al confirmar muestra el hash en stellar.expert y fuerza una actualización de la ficha.
+`components/bid-form.tsx` precarga la oferta mínima y delega la operación en `lib/bid.ts`. Antes de abrir la wallet, comprueba que la cuenta exista en Testnet y tenga XLM, trustline y USDC suficientes. Después simula `bid`, pide una sola firma, envía y espera la confirmación. Traduce a español el rechazo de firma, red equivocada, oferta superada, subasta cerrada, saldo insuficiente, transacción expirada y cuenta ocupada, y bloquea los envíos dobles. Al confirmar muestra el hash en stellar.expert y fuerza una actualización de la ficha. Si falta XLM, trustline o USDC, enlaza a `/empezar`.
+
+## USDC de prueba (B6)
+
+`POST /api/test-usdc` con `{ "address": "G…" }` envía 100 USDC de prueba desde la cuenta distribuidora de G1. Usa `USDC_DISTRIBUTOR_SECRET`, que solo existe en el servidor (`web/.env.local` y variables de Vercel); si falta, responde 503.
+
+- Una entrega por cuenta: el pago va en la misma transacción que una entrada `manageData` (`u:<cuenta>`) en la distribuidora. La marca es pública y no hace falta una base de datos. Cada marca bloquea 0,5 XLM de reserva en la distribuidora.
+- Si la cuenta ya recibió USDC, responde `alreadyClaimed: true` sin mover fondos.
+- Rechaza pedidos de otro origen y limita a 5 por minuto por IP. El límite vive en memoria por instancia y es solo un freno; el tope real es la marca.
