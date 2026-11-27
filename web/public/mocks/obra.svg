@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Imagen de prueba">
+  <rect width="800" height="600" fill="#e7e2d8"/>
+  <circle cx="560" cy="210" r="90" fill="#d98b4a"/>
+  <path d="M0 430 L170 280 L300 380 L460 230 L640 400 L800 300 L800 600 L0 600 Z" fill="#6b5b4f"/>
+  <path d="M0 500 L220 410 L420 480 L620 420 L800 470 L800 600 L0 600 Z" fill="#3f3530"/>
+</svg>
