@@ -74,6 +74,8 @@ fn token(env) -> Address;
 
 Oferta mínima válida: `highest_bid == 0 ? min_price : highest_bid + min_increment`.
 
+**Anti-sniping:** si una oferta entra cuando faltan menos de 300 s para `end_time`, el contrato lo extiende a `now + 300` (nunca lo acorta). El front siempre debe releer `end_time` con `get_auction` después de cada oferta.
+
 **Errores** (códigos fijos, no renumerar):
 
 | Código | Error |
@@ -151,21 +153,21 @@ G1 le pasa ese secret a G2 por privado (nunca por el repo). G2 documenta las var
 
 Dueño de `contracts/`, `scripts/`, `web/data/deploy.testnet.json`. Usar la skill `smart-contracts` (`development.md`, `testing.md`, `security.md`).
 
-- [ ] **A1. Scaffold**: `stellar contract init` en `contracts/`; `soroban-sdk` acorde al protocolo de Testnet (verificar con `getVersionInfo`); target `wasm32v1-none`; build con `stellar contract build`.
-- [ ] **A2. Storage**
+- [x] **A1. Scaffold**: `stellar contract init` en `contracts/`; `soroban-sdk` acorde al protocolo de Testnet (verificar con `getVersionInfo`); target `wasm32v1-none`; build con `stellar contract build`.
+- [x] **A2. Storage**
   - `instance`: `Admin`, `Token`, `NextId`.
   - `persistent`: `Auction(id)`, `PendingRefund(Address)`.
   - Extender TTL en cada escritura y al inicio de los entry points.
-- [ ] **A3. Funciones** según [I1](#i1-api-del-contrato-g1-implementa--g2-consume)
+- [x] **A3. Funciones** según [I1](#i1-api-del-contrato-g1-implementa--g2-consume)
   - `create_auction`: `admin.require_auth()`; valida `artist_bps <= 10000`, montos `> 0`, `end_time` futuro.
   - `bid`: `bidder.require_auth()`; subasta abierta; monto `>=` oferta mínima; `transfer(bidder → contrato)` y **en la misma tx** reembolso al postor superado.
   - `settle`: tras `end_time`; reparto `artist_bps` / resto al espacio (el redondeo va a la artista); sin ofertas → cerrada sin venta; no se liquida dos veces.
-- [ ] **A4. Errores y eventos** exactamente como en I1.
-- [ ] **A5. Seguridad** (checklist de `security.md`)
+- [x] **A4. Errores y eventos** exactamente como en I1.
+- [x] **A5. Seguridad** (checklist de `security.md`)
   - Reembolso robusto: si el postor superado no puede recibir (p. ej. borró la trustline), `try_transfer` falla → sumar a `PendingRefund` y emitir `refund` con `pending: true`. Nadie puede bloquear la subasta.
   - Aritmética con overflow checks; rechazar montos negativos.
   - Admin leído desde storage; sin reinicialización.
-- [ ] **A6. Tests unitarios** (`register_stellar_asset_contract_v2`, `set_timestamp`)
+- [x] **A6. Tests unitarios** (`register_stellar_asset_contract_v2`, `set_timestamp`)
   - Oferta menor al mínimo / al incremento → `BidTooLow`.
   - Superar una oferta reembolsa al anterior en la misma tx (balances exactos).
   - Oferta después del cierre → `AuctionEnded`.
@@ -173,13 +175,13 @@ Dueño de `contracts/`, `scripts/`, `web/data/deploy.testnet.json`. Usar la skil
   - Cierre sin ofertas.
   - Falta de auth en `bid` y `create_auction`.
   - Reembolso pendiente + `claim_refund`.
-- [ ] **A7. Script de deploy Testnet** (`scripts/deploy.sh`)
+- [x] **A7. Script de deploy Testnet** (`scripts/deploy.sh`)
   - Identidades `admin`, `artista`, `espacio`, `postor1`, `postor2`, `usdc-issuer`, `usdc-distribuidor` con `stellar keys generate --fund`.
   - Emitir USDC de prueba al distribuidor y desplegar el SAC con `stellar contract asset deploy`.
   - Deploy del contrato y `create_auction` por cada obra de `obras.json` (convertir USDC a 7 decimales y `cierre` a Unix).
   - Escribir `web/data/deploy.testnet.json` (I3). Pasar `USDC_DISTRIBUTOR_SECRET` a G2 por privado.
   - Fondear `postor1` y `postor2` con USDC para usarlas como wallets de demo de respaldo.
-- [ ] **A8. (Deseable) Anti-sniping**: si entra una oferta en los últimos N minutos, extender `end_time` (avisar a G2: cambia el countdown).
+- [x] **A8. (Deseable) Anti-sniping**: si entra una oferta cuando faltan < 300 s, `end_time` pasa a `now + 300` (ver I1).
 
 ## G2 — Web
 
