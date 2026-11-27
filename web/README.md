@@ -24,7 +24,7 @@ npm run dev                  # http://localhost:3000
 | `data/obras.json` | G3 | I2 |
 | `data/deploy.testnet.json` | G1 | I3 |
 
-Mientras no existan, usa los mocks de `data/mocks/` (misma forma) y la portada muestra un aviso de datos de prueba. Si un JSON no respeta el formato, el build falla con el campo que está mal.
+`deploy.testnet.json` ya está en el repo (deploy de G1 en Testnet). Mientras G3 no suba `obras.json`, se usa `data/mocks/obras.json`, con los mismos slugs que las subastas desplegadas (`scripts/obras.sample.json`), y la portada muestra un aviso de datos de prueba. Si un JSON no respeta el formato, el build falla con el campo que está mal.
 
 ## Wallet
 

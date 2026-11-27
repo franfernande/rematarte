@@ -8,13 +8,13 @@ const cierreFormat = new Intl.DateTimeFormat("es-AR", {
 
 export default function Home() {
   const obras = getObras();
-  const usingMocks = dataSources.obras === "mock" || dataSources.deploy === "mock";
+  const usingMocks = dataSources.obras === "mock";
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-6 px-4 py-6">
       {usingMocks && (
         <p className="rounded-lg bg-amber-100 px-3 py-2 text-sm text-amber-900">
-          Datos de prueba: todavía no están <code>obras.json</code> o <code>deploy.testnet.json</code> reales.
+          Datos de prueba: todavía no está el <code>obras.json</code> real.
         </p>
       )}
 

@@ -11,34 +11,34 @@
     "precioMinimoUsdc": 50,
     "incrementoMinimoUsdc": 5,
     "porcentajeArtista": 80,
-    "cierre": "2026-11-28T20:00:00-03:00"
+    "cierre": "2026-12-20T20:00:00-03:00"
   },
   {
-    "slug": "vendimia-nocturna",
-    "titulo": "Vendimia nocturna",
+    "slug": "vinedos-al-sur",
+    "titulo": "Viñedos al sur",
     "artista": "Artista de ejemplo",
-    "tecnica": "Acrílico sobre madera",
-    "medidas": "40 × 40 cm",
+    "tecnica": "Acrílico sobre lienzo",
+    "medidas": "50 × 70 cm",
     "anio": 2024,
     "descripcion": "Obra de prueba: reemplazar por la ficha real.",
     "imagen": "/mocks/obra.svg",
-    "precioMinimoUsdc": 30,
-    "incrementoMinimoUsdc": 2,
-    "porcentajeArtista": 85,
-    "cierre": "2026-11-28T20:30:00-03:00"
+    "precioMinimoUsdc": 35,
+    "incrementoMinimoUsdc": 5,
+    "porcentajeArtista": 80,
+    "cierre": "2026-12-20T20:10:00-03:00"
   },
   {
-    "slug": "cordillera-en-tinta",
-    "titulo": "Cordillera en tinta",
+    "slug": "cerro-en-calma",
+    "titulo": "Cerro en calma",
     "artista": "Artista de ejemplo",
-    "tecnica": "Tinta china sobre papel",
-    "medidas": "30 × 42 cm",
-    "anio": 2026,
-    "descripcion": "Obra de prueba ya cerrada, para probar el estado de subasta terminada.",
+    "tecnica": "Acuarela sobre papel",
+    "medidas": "40 × 55 cm",
+    "anio": 2025,
+    "descripcion": "Obra de prueba: reemplazar por la ficha real.",
     "imagen": "/mocks/obra.svg",
-    "precioMinimoUsdc": 20,
-    "incrementoMinimoUsdc": 1,
+    "precioMinimoUsdc": 25,
+    "incrementoMinimoUsdc": 2.5,
     "porcentajeArtista": 75,
-    "cierre": "2026-11-27T12:00:00-03:00"
+    "cierre": "2026-12-20T20:20:00-03:00"
   }
 ]

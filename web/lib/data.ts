@@ -52,7 +52,7 @@ export type DataSource = "real" | "mock";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 
-// Falls back to data/mocks/ until G3 and G1 commit the real files.
+// Falls back to data/mocks/ until the owner commits the real file (today only obras.json, from G3).
 function loadJson<T>(file: string, schema: z.ZodType<T>): { data: T; source: DataSource } {
   const realPath = path.join(DATA_DIR, file);
   const source: DataSource = fs.existsSync(realPath) ? "real" : "mock";
