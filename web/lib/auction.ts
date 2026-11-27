@@ -1,5 +1,6 @@
 import { contract, NotFoundError, scValToNative, xdr } from "@stellar/stellar-sdk";
 import type { AuctionEvent, AuctionState, FriendlyError, SignTransaction, TxResult } from "@/lib/auction-types";
+import { Client as GeneratedClient } from "@/lib/contract/auction";
 import { minNextBid } from "@/lib/format";
 import { AUCTION_CONTRACT_ID, NETWORK_PASSPHRASE, RPC_URL, USDC, horizonServer, rpcServer } from "@/lib/stellar";
 
@@ -57,25 +58,27 @@ function clientOptions(): contract.ClientOptions {
   };
 }
 
+// Typed client generated from the contract bindings (lib/contract/auction.ts, synced with `npm run bindings:sync`).
+// It embeds the contract spec, so no network round trip is needed to build it.
+function makeClient(options: contract.ClientOptions): AuctionClient {
+  return new GeneratedClient(options) as unknown as AuctionClient;
+}
+
 function getReadClient(): Promise<AuctionClient> {
-  readClientPromise ??= contract.Client.from<AuctionContract>(clientOptions()).catch((error: unknown) => {
-    readClientPromise = undefined;
-    throw error;
-  });
+  readClientPromise ??= Promise.resolve(makeClient(clientOptions()));
   return readClientPromise;
 }
 
 function getWriteClient(publicKey: string, signTransaction: SignTransaction): Promise<AuctionClient> {
   let clientPromise = writeClientPromises.get(publicKey);
   if (!clientPromise) {
-    clientPromise = contract.Client.from<AuctionContract>({
-      ...clientOptions(),
-      publicKey,
-      signTransaction: signTransaction as contract.ClientOptions["signTransaction"],
-    }).catch((error: unknown) => {
-      writeClientPromises.delete(publicKey);
-      throw error;
-    });
+    clientPromise = Promise.resolve(
+      makeClient({
+        ...clientOptions(),
+        publicKey,
+        signTransaction: signTransaction as contract.ClientOptions["signTransaction"],
+      }),
+    );
     writeClientPromises.set(publicKey, clientPromise);
   }
   return clientPromise;

@@ -5,6 +5,16 @@ import { notFound } from "next/navigation";
 import { AuctionPanel } from "@/components/auction/auction-panel";
 import { ObraArte } from "@/components/obra-arte";
 import { dataSources, getDeploy, getObra, getObras } from "@/lib/data";
+import { accountUrl } from "@/lib/format";
+
+const cierreLargo = new Intl.DateTimeFormat("es-AR", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "America/Argentina/Mendoza",
+});
 
 export function generateStaticParams() {
   return getObras().map((obra) => ({ slug: obra.slug }));
@@ -45,7 +55,8 @@ async function Ficha({ params }: { params: PageProps<"/obra/[slug]">["params"] }
   const obra = getObra(slug);
   if (!obra) notFound();
 
-  const auctionId = getDeploy().subastas[obra.slug];
+  const { subastas, auctionContractId } = getDeploy();
+  const auctionId = subastas[obra.slug];
   const usingMocks = dataSources.obras === "mock";
 
   return (
@@ -85,7 +96,40 @@ async function Ficha({ params }: { params: PageProps<"/obra/[slug]">["params"] }
               <p className="mt-3 font-serif text-2xl">Esta obra todavía no tiene subasta publicada.</p>
             </div>
           ) : (
-            <AuctionPanel auctionId={auctionId} titulo={obra.titulo} />
+            <>
+              <AuctionPanel auctionId={auctionId} titulo={obra.titulo} />
+              <dl className="mt-5 grid gap-4 border-t border-linea pt-5 text-sm leading-relaxed text-tinta-2">
+                <div>
+                  <dt className="etiqueta">Cómo se reparte</dt>
+                  <dd className="mt-1">
+                    Al liquidar, el {obra.porcentajeArtista} % va a la artista y el {100 - obra.porcentajeArtista} % al
+                    espacio. El porcentaje se fijó antes de empezar y no se puede cambiar.
+                  </dd>
+                </div>
+                <div>
+                  <dt className="etiqueta">Cierre previsto</dt>
+                  <dd className="mt-1 first-letter:uppercase">
+                    {cierreLargo.format(new Date(obra.cierre))}. Si alguien oferta en los últimos 5 minutos, el cierre se corre 5
+                    minutos más.
+                  </dd>
+                </div>
+                <div>
+                  <dt className="etiqueta">Verificable</dt>
+                  <dd className="mt-1">
+                    Todo lo de esta subasta se puede auditar en{" "}
+                    <a
+                      href={accountUrl(auctionContractId)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-malbec underline decoration-malbec/30 underline-offset-4 hover:decoration-malbec"
+                    >
+                      el contrato en stellar.expert
+                    </a>
+                    .
+                  </dd>
+                </div>
+              </dl>
+            </>
           )}
         </aside>
       </div>

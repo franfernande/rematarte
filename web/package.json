@@ -6,11 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "bindings:sync": "node scripts/sync-bindings.mjs"
   },
   "dependencies": {
     "@creit-tech/stellar-wallets-kit": "npm:@jsr/creit-tech__stellar-wallets-kit@^2.8.0",
     "@stellar/stellar-sdk": "^17.4.0",
+    "buffer": "6.0.3",
     "next": "16.4.6",
     "qrcode": "1.5.4",
     "react": "19.3.0",

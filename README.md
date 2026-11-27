@@ -146,15 +146,34 @@ El repo incluye contexto de Stellar para que cualquier agente (Devin, Cursor, Cl
 
 ### Skills instaladas
 
+Paquete oficial completo ([`stellar/stellar-dev-skill`](https://github.com/stellar/stellar-dev-skill)):
+
 | Skill | Para qué la usamos |
 |---|---|
 | `smart-contracts` | Escribir, testear y desplegar el contrato Soroban de la subasta (storage, auth, eventos, seguridad, testing) |
-| `dapp` | Frontend: conectar wallets (Wallets Kit/Freighter), firmar y enviar transacciones, invocar el contrato |
+| `dapp` | Frontend: conectar wallets (Wallets Kit con Albedo y Varial, ex Freighter), firmar y enviar transacciones, invocar el contrato |
 | `assets` | USDC clásico + trustlines + puente SAC para que el contrato use el token |
 | `data` | Leer estado y eventos del contrato vía Stellar RPC |
 | `standards` | Elegir los SEP correctos (SEP-41 tokens, etc.) y referencias del ecosistema |
+| `agentic-payments` | Fuera del MVP: cobros x402/MPP a agentes de IA |
+| `cross-chain` | Fuera del MVP: traer USDC desde otras cadenas (CCTP, Axelar, LayerZero) |
+| `zk-proofs` | Fuera del MVP: verificación de pruebas ZK on-chain |
 
-Disponibles en el mismo paquete por si el alcance cambia: `agentic-payments` (x402/MPP), `cross-chain` (CCTP/Axelar/LayerZero), `zk-proofs` — [instalar](https://skills.stellar.org) solo si hacen falta.
+Skills de la comunidad (listadas en [skills.stellar.org](https://skills.stellar.org); no las revisa ni mantiene la SDF):
+
+| Skill | Para qué la usamos | Fuente |
+|---|---|---|
+| `soroban-common-mistakes` | Revisar el contrato de la subasta contra 23 errores comunes (auth, TTL, aritmética, panics) antes de desplegar | [mariaelisaaraya/stellar-security-guide](https://github.com/mariaelisaaraya/stellar-security-guide) (MIT) |
+
+Skills generales para la web (G2):
+
+| Skill | Para qué la usamos | Fuente |
+|---|---|---|
+| `nextjs-senior` | App Router, límite servidor/cliente y API routes (B1–B6) | [blessedux/agent-skills](https://github.com/blessedux/agent-skills) |
+| `deploy-to-vercel` | Deploy en Vercel (B7) | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) |
+| `webapp-testing` | Tests con Playwright en viewport mobile | [anthropics/skills](https://github.com/anthropics/skills) (Apache 2.0) |
+| `frontend-design` | Dirección visual de las fichas de obra (B4) | [anthropics/skills](https://github.com/anthropics/skills) (Apache 2.0) |
+| `web-design-guidelines` | Revisión de UX y accesibilidad (B4, B5) | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) |
 
 ### MCP: Stellar Raven
 

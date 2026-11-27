@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated contract bindings, synced with `npm run bindings:sync`.
+    "lib/contract/auction.ts",
   ]),
 ]);
 
