@@ -14,6 +14,9 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Generated contract bindings, synced with `npm run bindings:sync`.
     "lib/contract/auction.ts",
+    // Playwright output.
+    "playwright-report/**",
+    "test-results/**",
   ]),
 ]);
 
