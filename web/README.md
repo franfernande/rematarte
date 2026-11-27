@@ -15,6 +15,15 @@ npm run dev                  # http://localhost:3000
 
 `npm run build` y `npm run lint` antes de abrir el PR.
 
+## Deploy (B7)
+
+Producción: **https://rematarte.vercel.app** (proyecto `rematarte` en Vercel, Root Directory `web`, preset Next.js). Ese dominio es público; las URLs generadas por cada deploy piden login de Vercel.
+
+- `USDC_DISTRIBUTOR_SECRET` se carga solo en Vercel, por quien la tenga y desde un checkout vinculado: `vercel env add USDC_DISTRIBUTOR_SECRET production --sensitive` (la CLI pide el valor; no va en la línea de comando ni en el repo). Después hay que volver a desplegar. Sin la variable, `/api/test-usdc` responde 503 y el resto anda igual.
+- El repo todavía no está conectado por Git (la app de Vercel no tiene acceso a `franfernande/rematarte`). Cuando lo tenga: `vercel git connect` y cada push a `main` despliega solo.
+- Mientras tanto, se despliega a mano desde un checkout limpio de `main`, en la raíz del repo: `vercel link --project rematarte` y `vercel deploy --prod`. `vercel link` crea un `.env.local` con un token temporal: borralo antes de desplegar.
+- Los QR se imprimen desde https://rematarte.vercel.app/qr.
+
 ## Datos
 
 `lib/data.ts` lee y valida los JSON acordados en el plan:
