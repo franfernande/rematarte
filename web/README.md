@@ -15,6 +15,15 @@ npm run dev                  # http://localhost:3000
 
 `npm run build` y `npm run lint` antes de abrir el PR.
 
+## Deploy (B7)
+
+Producción: **https://rematarte.vercel.app** (proyecto `rematarte` en Vercel, Root Directory `web`, preset Next.js). Ese dominio es público; las URLs generadas por cada deploy piden login de Vercel.
+
+- `USDC_DISTRIBUTOR_SECRET` se carga solo en Vercel, por quien la tenga y desde un checkout vinculado: `vercel env add USDC_DISTRIBUTOR_SECRET production --sensitive` (la CLI pide el valor; no va en la línea de comando ni en el repo). Después hay que volver a desplegar. Sin la variable, `/api/faucet` responde 503 y el resto anda igual.
+- El repo todavía no está conectado por Git (la app de Vercel no tiene acceso a `franfernande/rematarte`). Cuando lo tenga: `vercel git connect` y cada push a `main` despliega solo.
+- Mientras tanto, se despliega a mano desde un checkout limpio de `main`, en la raíz del repo: `vercel link --project rematarte` y `vercel deploy --prod`. `vercel link` crea un `.env.local` con un token temporal: borralo antes de desplegar.
+- Los QR se imprimen desde https://rematarte.vercel.app/qr.
+
 ## Datos
 
 `lib/data.ts` lee y valida los JSON acordados en el plan:
@@ -39,7 +48,7 @@ npm run dev                  # http://localhost:3000
 - `/`: la muestra, con cada obra enmarcada y su estado en vivo (puja actual o precio base).
 - `/obra/[slug]`: la ficha, adonde lleva el QR. Panel en vivo con cuenta regresiva y aviso de anti-sniping, oferta en 2 toques, aviso de "te superaron", registro de la puja, liquidación con reparto y reclamo de reembolso pendiente. Debajo, el reparto explicado, el cierre previsto y el link al contrato.
 - `/empezar`: prepara la cuenta paso a paso (activar en Testnet, habilitar USDC, recibir 200 USDC de prueba).
-- `/api/faucet`: entrega USDC de prueba hasta 200 por cuenta. Usa `USDC_DISTRIBUTOR_SECRET` solo en el servidor (nunca `NEXT_PUBLIC_`).
+- `/api/faucet`: entrega USDC de prueba (ver más abajo).
 - `/qr`: cartelas imprimibles en A4 con QR. Imprimirlas desde la URL pública (en localhost muestra un aviso).
 
 Los colores y las tipografías son los de la identidad de G3 (`docs/slides/`), definidos como tokens en `app/globals.css` (`cal`, `papel`, `tinta`, `piedra`, `linea`, `malbec`, `ocre`).
@@ -53,3 +62,13 @@ Los colores y las tipografías son los de la identidad de G3 (`docs/slides/`), d
 - **Albedo o Freighter/Varial**: vía Stellar Wallets Kit v2 (desde JSR, ver `.npmrc`).
 
 Después de entrar con passkey o dispositivo, `prepareAccount` (`lib/onboarding.ts`) deja la cuenta lista sola: Friendbot, trustline y 200 USDC de prueba.
+
+La cuenta "en este dispositivo" guarda su secret key en `localStorage`: sirve solo para Testnet y cualquier script que corra en la página podría leerla.
+
+## USDC de prueba (`/api/faucet`)
+
+`POST /api/faucet` con `{ "address": "G…" }` completa el saldo hasta 200 USDC de prueba desde la cuenta distribuidora de G1. Usa `USDC_DISTRIBUTOR_SECRET`, que solo existe en el servidor (`web/.env.local` y variables de Vercel, nunca `NEXT_PUBLIC_`); si falta, responde 503.
+
+- Una entrega por cuenta: el pago va en la misma transacción que una entrada `manageData` (`u:<cuenta>`) en la distribuidora. La marca es pública y no hace falta una base de datos. Cada marca bloquea 0,5 XLM de reserva en la distribuidora.
+- Si la cuenta ya recibió USDC, responde `{ funded: false, alreadyClaimed: true }` sin mover fondos, y el onboarding da el paso por hecho con el saldo que quede.
+- Rechaza pedidos de otro origen y limita a un envío por minuto por cuenta y por IP. Ese límite vive en memoria por instancia y es solo un freno; el tope real es la marca.

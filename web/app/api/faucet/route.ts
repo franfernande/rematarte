@@ -1,4 +1,4 @@
-import { Asset, BASE_FEE, Keypair, Operation, StrKey, TransactionBuilder } from "@stellar/stellar-sdk";
+import { Asset, BASE_FEE, Horizon, Keypair, Operation, StrKey, TransactionBuilder } from "@stellar/stellar-sdk";
 import type { NextRequest } from "next/server";
 import deployConfig from "@/data/deploy.testnet.json";
 import {
@@ -84,6 +84,14 @@ function error(status: number, message: string, retryAfterSeconds?: number): Res
   );
 }
 
+function claimMarker(address: string): string {
+  return `u:${address}`;
+}
+
+function hasClaimed(distributorAccount: Horizon.AccountResponse, address: string): boolean {
+  return Object.hasOwn(distributorAccount.data_attr, claimMarker(address));
+}
+
 function readAddress(body: unknown): string | null {
   if (typeof body !== "object" || body === null || !("address" in body)) return null;
   const address = body.address;
@@ -119,6 +127,11 @@ function paymentFailureResponse(errorUnknown: unknown): Response {
 }
 
 export async function POST(request: NextRequest) {
+  const origin = request.headers.get("origin");
+  if (origin && origin !== request.nextUrl.origin) {
+    return error(403, "Este faucet solo responde a la web de RematArte.");
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -175,6 +188,9 @@ export async function POST(request: NextRequest) {
     }
     return error(502, "No pudimos leer la cuenta del faucet en Stellar Testnet. Esperá unos segundos y probá de nuevo.");
   }
+  if (hasClaimed(distributorAccount, address)) {
+    return json({ funded: false, alreadyClaimed: true });
+  }
 
   const amountStroops = ONBOARDING_TARGET_STROOPS - currentBalance;
   const amount = stroopsToAssetAmount(amountStroops);
@@ -184,6 +200,8 @@ export async function POST(request: NextRequest) {
     networkPassphrase: deployConfig.networkPassphrase,
   })
     .addOperation(Operation.payment({ destination: address, asset, amount }))
+    // Atomic with the payment: this public marker caps the faucet at one grant per account without a database.
+    .addOperation(Operation.manageData({ name: claimMarker(address), value: "1" }))
     .setTimeout(180)
     .build();
   transaction.sign(distributor);
@@ -194,6 +212,9 @@ export async function POST(request: NextRequest) {
     return json({ funded: true, hash: submitted.hash, amount });
   } catch (submitError) {
     unmarkRateLimit(address, ip, rateLimitMark);
+    // A concurrent request may have won with the same sequence number; the marker is the source of truth.
+    const latest = await server.loadAccount(distributor.publicKey()).catch(() => null);
+    if (latest && hasClaimed(latest, address)) return json({ funded: false, alreadyClaimed: true });
     return paymentFailureResponse(submitError);
   }
 }
