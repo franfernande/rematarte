@@ -1,4 +1,4 @@
-import { nativeToScVal, rpc, scValToNative, xdr, type contract } from "@stellar/stellar-sdk";
+import { nativeToScVal, rpc, scValToNative, xdr } from "@stellar/stellar-sdk";
 import { Client, type Auction, type Errors } from "@/lib/contract/auction";
 import type { DeployConfig } from "@/lib/data";
 
@@ -9,9 +9,14 @@ const UNITS_PER_USDC = BigInt(10 ** USDC_DECIMALS);
 const ZERO = BigInt(0);
 const BPS = 10_000;
 
+export type WalletSignTransaction = (
+  xdr: string,
+  opts?: { networkPassphrase?: string; address?: string; submit?: boolean; submitUrl?: string },
+) => Promise<{ signedTxXdr: string; signerAddress?: string }>;
+
 export type WalletSigner = {
   publicKey: string;
-  signTransaction: NonNullable<contract.ClientOptions["signTransaction"]>;
+  signTransaction: WalletSignTransaction;
 };
 
 // Without a signer the client can still simulate reads such as get_auction.
@@ -83,10 +88,20 @@ export function parseUsdc(value: string | number): bigint {
 
 const usdcFormat = new Intl.NumberFormat("es-AR", { maximumFractionDigits: USDC_DECIMALS });
 
-export function formatUsdc(units: bigint): string {
-  const whole = units / UNITS_PER_USDC;
+function usdcParts(units: bigint): { whole: bigint; fraction: string } {
   const fraction = (units % UNITS_PER_USDC).toString().padStart(USDC_DECIMALS, "0").replace(/0+$/, "");
+  return { whole: units / UNITS_PER_USDC, fraction };
+}
+
+export function formatUsdc(units: bigint): string {
+  const { whole, fraction } = usdcParts(units);
   return usdcFormat.format(`${whole}${fraction ? `.${fraction}` : ""}` as `${number}`);
+}
+
+// For prefilling inputs: no thousands separator, so parseUsdc reads it back unchanged.
+export function usdcInput(units: bigint): string {
+  const { whole, fraction } = usdcParts(units);
+  return fraction ? `${whole},${fraction}` : `${whole}`;
 }
 
 const CONTRACT_ERROR_MESSAGES: Record<keyof typeof Errors, string> = {
@@ -148,7 +163,7 @@ const RETENTION_MARGIN_LEDGERS = 20;
 
 const servers = new Map<string, rpc.Server>();
 
-function rpcServer(deploy: DeployConfig): rpc.Server {
+export function rpcServer(deploy: DeployConfig): rpc.Server {
   let server = servers.get(deploy.rpcUrl);
   if (!server) {
     server = new rpc.Server(deploy.rpcUrl);

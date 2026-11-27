@@ -52,3 +52,5 @@ Los colores y las tipografías son los de la identidad de G3 (`docs/slides/`) y 
 ## Wallet
 
 `components/wallet-provider.tsx` expone `useWallet()` con `address`, `connect`, `disconnect` y `signTransaction`. Usa Stellar Wallets Kit v2 (desde JSR, ver `.npmrc`) con Albedo y Varial (ex Freighter), según la decisión D3.
+
+`components/bid-form.tsx` precarga la oferta mínima y delega la operación en `lib/bid.ts`. Antes de abrir la wallet, comprueba que la cuenta exista en Testnet y tenga XLM, trustline y USDC suficientes. Después simula `bid`, pide una sola firma, envía y espera la confirmación. Traduce a español el rechazo de firma, red equivocada, oferta superada, subasta cerrada, saldo insuficiente, transacción expirada y cuenta ocupada, y bloquea los envíos dobles. Al confirmar muestra el hash en stellar.expert y fuerza una actualización de la ficha.

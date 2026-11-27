@@ -195,7 +195,7 @@ Dueño de `web/` (excepto `web/data/obras.json`, `web/public/obras/` y `web/data
   - `/obra/[slug]` — foto, título, artista, técnica, countdown, puja actual o precio mínimo, "ofertá desde X", historial y botón de ofertar.
   - `/empezar` — onboarding (B6).
   - `/qr` — hoja imprimible con un QR por obra apuntando a `/obra/[slug]`.
-- [ ] **B5. Ofertar en 2 toques**: monto precargado con la oferta mínima → firmar → `signAndSend` → estado + link al explorador. Errores: wallet no conectada, firma rechazada, red equivocada, saldo de XLM/USDC insuficiente, cuenta sin fondear, tx expirada, doble envío.
+- [x] **B5. Ofertar en 2 toques**: monto precargado con la oferta mínima → firmar → `signAndSend` → estado + link al explorador. Errores: wallet no conectada, firma rechazada, red equivocada, saldo de XLM/USDC insuficiente, cuenta sin fondear, tx expirada, doble envío.
 - [ ] **B6. Onboarding del jurado** (`/empezar`): conectar wallet → fondear con Friendbot → crear trustline USDC → "Recibir USDC de prueba" (API route que firma con `USDC_DISTRIBUTOR_SECRET`, con tope por cuenta).
 - [ ] **B7. Deploy en Vercel** (HTTPS para que los QR abran en el celu) con `USDC_DISTRIBUTOR_SECRET` configurada. Pasar la URL a G3.
 - [ ] **B8. (Deseable) Liquidación visible**: botón "Liquidar" tras el cierre y comprobante del reparto artista/espacio con link a stellar.expert.

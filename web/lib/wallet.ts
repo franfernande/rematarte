@@ -7,6 +7,20 @@ type WalletKit = {
 
 let walletKit: Promise<WalletKit> | undefined;
 
+export class WrongNetworkError extends Error {
+  constructor(readonly walletNetworkPassphrase: string) {
+    super("La wallet está en otra red.");
+    this.name = "WrongNetworkError";
+  }
+}
+
+// SEP-43 code that Varial and Albedo use when the user rejects a request.
+const USER_REJECTED = -4;
+
+export function isUserRejection(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error && error.code === USER_REJECTED;
+}
+
 // The kit reads window and localStorage at import time, so it must only load in the browser.
 export function loadWalletKit(networkPassphrase: string): Promise<WalletKit> {
   walletKit ??= (async () => {

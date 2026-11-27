@@ -30,7 +30,7 @@ export default async function ObraPage({ params }: PageProps<"/obra/[slug]">) {
 
   return (
     <article className="mx-auto grid w-full max-w-5xl gap-6 px-4 py-6 md:grid-cols-[3fr_2fr] md:items-start md:gap-10 md:py-10">
-      <figure className="relative aspect-[4/3] max-h-[50svh] w-full bg-cal-2 md:sticky md:top-6 md:max-h-none">
+      <figure className="relative aspect-[4/3] max-h-[38svh] w-full bg-cal-2 md:sticky md:top-6 md:max-h-none">
         <Image
           src={obra.imagen}
           alt={`${obra.titulo}, de ${obra.artista}`}
