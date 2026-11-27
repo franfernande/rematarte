@@ -1,89 +1,128 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import QRCode from "qrcode";
 import { Suspense } from "react";
-import { PrintButton } from "@/components/print-button";
+import { PrintButton } from "@/components/qr/print-button";
+import { QrCard } from "@/components/qr/qr-card";
 import { getObras } from "@/lib/data";
+import { qrSvgForUrl } from "@/lib/qr";
+import "./qr-print.css";
 
 export const metadata: Metadata = {
-  title: "QR para imprimir",
+  title: "Cartelas QR",
+  description: "Cartelas imprimibles con QR para las obras de la muestra RematArte.",
 };
 
-const LOCAL_HOST = /^(localhost|127\.|192\.168\.|10\.|\[::1\])/;
+const cierreFormat = new Intl.DateTimeFormat("es-AR", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "America/Argentina/Mendoza",
+});
 
-// The QR codes point at whatever host serves this page, so print it from the public (HTTPS) URL.
-async function siteOrigin(): Promise<{ origin: string; local: boolean }> {
-  const requestHeaders = await headers();
-  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost:3000";
-  const local = LOCAL_HOST.test(host);
-  const protocol = requestHeaders.get("x-forwarded-proto") ?? (local ? "http" : "https");
-  return { origin: `${protocol}://${host}`, local };
+const precioFormat = new Intl.NumberFormat("es-AR", {
+  maximumFractionDigits: 2,
+});
+
+function normalizeBaseUrl(value: string): string {
+  return value.replace(/\/+$/, "");
 }
 
-async function QrSheet() {
-  const { origin, local } = await siteOrigin();
-  const codes = await Promise.all(
-    getObras().map(async (obra) => {
-      const url = `${origin}/obra/${obra.slug}`;
-      const svg = await QRCode.toString(url, {
-        type: "svg",
-        margin: 0,
-        errorCorrectionLevel: "M",
-        color: { dark: "#1e1b18", light: "#ffffff" },
-      });
-      return { obra, url, svg };
+async function requestBaseUrl(): Promise<string> {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (configured) return normalizeBaseUrl(configured);
+
+  const requestHeaders = await headers();
+  const proto = requestHeaders.get("x-forwarded-proto")?.split(",")[0]?.trim() || "http";
+  const host = requestHeaders.get("host")?.split(",")[0]?.trim() || "localhost:3000";
+  return normalizeBaseUrl(`${proto}://${host}`);
+}
+
+function isLocalUrl(base: string): boolean {
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(base);
+}
+
+async function PrintableQrCards() {
+  const base = await requestBaseUrl();
+  const obras = getObras();
+  const local = isLocalUrl(base);
+
+  const cards = await Promise.all(
+    obras.map(async (obra) => {
+      const absoluteUrl = `${base}/obra/${obra.slug}?ref=qr`;
+      const qrSvg = await qrSvgForUrl(absoluteUrl);
+      return {
+        obra,
+        absoluteUrl,
+        displayUrl: absoluteUrl.replace(/^https?:\/\//, ""),
+        qrSvg,
+      };
     }),
   );
 
   return (
     <>
       {local && (
-        <p role="alert" className="border-l-2 border-ocre bg-papel px-3 py-2 text-sm text-tinta-2 print:hidden">
-          Estás abriendo esta hoja desde <code>{origin}</code>, y otro celular no va a poder entrar ahí. Para
-          imprimir, abrila desde la URL pública del sitio.
+        <p className="mb-5 rounded-lg border border-ocre/40 bg-ocre/10 px-4 py-3 text-sm leading-relaxed text-tinta-2 print:hidden">
+          Estos QR apuntan a localhost: generalos desde la URL pública de Vercel.
         </p>
       )}
-      <ul className="grid gap-4 sm:grid-cols-2 print:grid-cols-2 print:gap-0">
-        {codes.map(({ obra, url, svg }) => (
-          <li
+      <div className="qr-list grid gap-6">
+        {cards.map(({ obra, displayUrl, qrSvg }) => (
+          <QrCard
             key={obra.slug}
-            className="flex break-inside-avoid flex-col items-center gap-3 border border-dashed border-piedra bg-white p-6 text-center"
-          >
-            <div
-              role="img"
-              aria-label={`Código QR de ${obra.titulo}`}
-              className="w-44 [&>svg]:h-auto [&>svg]:w-full"
-              dangerouslySetInnerHTML={{ __html: svg }}
-            />
-            <div className="flex flex-col gap-1">
-              <p className="font-serif text-xl leading-snug italic">{obra.titulo}</p>
-              <p className="text-sm">
-                <span className="font-semibold">{obra.artista}</span>, {obra.anio}
-              </p>
-              <p className="text-sm text-tinta-2">Escaneá para ver la obra y ofertar en USDC.</p>
-              <p className="font-mono text-xs break-all text-piedra">{url}</p>
-            </div>
-          </li>
+            titulo={obra.titulo}
+            artista={obra.artista}
+            tecnica={obra.tecnica}
+            medidas={obra.medidas}
+            anio={obra.anio}
+            precioBase={precioFormat.format(obra.precioMinimoUsdc)}
+            cierre={cierreFormat.format(new Date(obra.cierre))}
+            qrSvg={qrSvg}
+            displayUrl={displayUrl}
+          />
         ))}
-      </ul>
+      </div>
     </>
+  );
+}
+
+function QrCardsFallback() {
+  return (
+    <div className="qr-list grid gap-6" aria-label="Preparando cartelas">
+      {[0, 1, 2].map((item) => (
+        <div key={item} className="cartela h-72 animate-pulse p-6">
+          <div className="h-4 w-32 rounded bg-linea" />
+          <div className="mt-6 h-9 w-2/3 rounded bg-linea" />
+          <div className="mt-4 h-4 w-1/2 rounded bg-linea" />
+        </div>
+      ))}
+    </div>
   );
 }
 
 export default function QrPage() {
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 print:max-w-none print:p-0">
-      <header className="flex flex-col gap-3 print:hidden">
-        <h1 className="font-serif text-4xl leading-tight">QR para imprimir</h1>
-        <p className="text-tinta-2">
-          Un QR por obra. Cada uno abre la ficha de la obra en el celular, sin instalar nada. Recortalos por la línea
-          punteada y pegalos al lado de cada obra.
-        </p>
-        <PrintButton />
+    <div className="qr-page mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+      <header className="qr-screen-header flex flex-col gap-5 border-b border-linea pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div className="max-w-2xl">
+          <p className="etiqueta">Impresión A4</p>
+          <h1 className="mt-3 font-serif text-4xl leading-tight text-tinta sm:text-5xl">
+            Cartelas con <span className="italic text-malbec">QR</span> para la muestra
+          </h1>
+          <p className="mt-3 text-sm leading-relaxed text-tinta-2 sm:text-base">
+            Imprimí esta página en A4, recortá por las líneas punteadas y pegá una cartela al lado de cada obra.
+            Cada QR abre la ficha correspondiente para ver la puja y ofertar.
+          </p>
+        </div>
+        <div className="shrink-0 print:hidden">
+          <PrintButton />
+        </div>
       </header>
-      <Suspense fallback={<p className="text-sm text-tinta-2">Generando los QR…</p>}>
-        <QrSheet />
-      </Suspense>
+
+      <div className="mt-6">
+        <Suspense fallback={<QrCardsFallback />}>
+          <PrintableQrCards />
+        </Suspense>
+      </div>
     </div>
   );
 }

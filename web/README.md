@@ -19,7 +19,7 @@ npm run dev                  # http://localhost:3000
 
 Producción: **https://rematarte.vercel.app** (proyecto `rematarte` en Vercel, Root Directory `web`, preset Next.js). Ese dominio es público; las URLs generadas por cada deploy piden login de Vercel.
 
-- `USDC_DISTRIBUTOR_SECRET` se carga solo en Vercel, por quien la tenga y desde un checkout vinculado: `vercel env add USDC_DISTRIBUTOR_SECRET production --sensitive` (la CLI pide el valor; no va en la línea de comando ni en el repo). Después hay que volver a desplegar. Sin la variable, `/api/test-usdc` responde 503 y el resto anda igual.
+- `USDC_DISTRIBUTOR_SECRET` se carga solo en Vercel, por quien la tenga y desde un checkout vinculado: `vercel env add USDC_DISTRIBUTOR_SECRET production --sensitive` (la CLI pide el valor; no va en la línea de comando ni en el repo). Después hay que volver a desplegar. Sin la variable, `/api/faucet` responde 503 y el resto anda igual.
 - El repo todavía no está conectado por Git (la app de Vercel no tiene acceso a `franfernande/rematarte`). Cuando lo tenga: `vercel git connect` y cada push a `main` despliega solo.
 - Mientras tanto, se despliega a mano desde un checkout limpio de `main`, en la raíz del repo: `vercel link --project rematarte` y `vercel deploy --prod`. `vercel link` crea un `.env.local` con un token temporal: borralo antes de desplegar.
 - Los QR se imprimen desde https://rematarte.vercel.app/qr.
@@ -37,38 +37,38 @@ Producción: **https://rematarte.vercel.app** (proyecto `rematarte` en Vercel, R
 
 ## Contrato
 
-`lib/stellar.ts` es el punto de entrada al contrato de subastas (I1). Sirve en el servidor y en el navegador; recibe la config de `getDeploy()` como parámetro.
-
-- `auctionClient(deploy, signer?)`: cliente tipado. Sin `signer` solo simula lecturas; para ofertar se le pasa `{ publicKey: address, signTransaction }` de `useWallet()`.
-- `getAuction` y `getAuctionsBySlug`: leen por simulación, sin wallet. `getAuctionsBySlug` deja afuera las subastas que no están en `subastas` (por ejemplo, la del smoke test de G1).
-- `getAuctionEvents(deploy, id, cursor?)`: ofertas, reembolsos y liquidación (eventos de I1) por `getEvents`. Sin `cursor` recorre los ~7 días que guarda el RPC (de a 10.000 ledgers, en paralelo); con el `cursor` que devuelve trae solo lo nuevo.
-- `minimumBid` (regla de I1), `settlementSplit` (mismo redondeo que `settle`), `auctionStatus`, `parseUsdc` / `formatUsdc` (7 decimales, con `bigint`), `contractErrorMessage` (errores 1–9 en español) y `explorerUrl` (stellar.expert).
-
-El cliente usa los bindings que genera G1 (`scripts/bindings.sh`), copiados en `lib/contract/auction.ts`. No se instalan como paquete porque fijan `@stellar/stellar-sdk` 16 y la web usa la 17. Si G1 cambia el contrato, regenerar los bindings y correr:
-
-```bash
-npm run bindings:sync
-```
+- `lib/contract/auction.ts`: cliente tipado generado de los bindings de G1 (`scripts/bindings.sh`). No se instala como paquete porque fija `@stellar/stellar-sdk` 16 y la web usa la 17. Si G1 cambia el contrato, regenerar los bindings y correr `npm run bindings:sync`.
+- `lib/stellar.ts`: config de red leída de `data/deploy.testnet.json` (RPC, Horizon, contrato, USDC de prueba).
+- `lib/auction.ts`: lecturas por simulación sin wallet (`readAuction`, `readAuctions`, `readEvents`, `readEventsSince`, `readPendingRefund`, `readUsdcBalance`, `readLedgerTime`), escrituras firmadas (`placeBid`, `settleAuction`, `claimRefund`) y `toFriendlyError` (errores 1–9 y de wallet/red en español).
+- `lib/use-auction.ts`: hook `useAuction(id, { intervalMs?, events? })` con polling sin superposición, eventos incrementales y reloj alineado al ledger (para el anti-sniping).
+- `lib/format.ts` y `lib/auction-types.ts`: montos con `bigint` (7 decimales), fases de la subasta y links a stellar.expert.
 
 ## Páginas
 
-- `/`: la muestra. Cada obra muestra la oferta actual o el precio base y cuánto falta (relee `list_auctions` cada 15 s).
-- `/obra/[slug]`: la ficha, que es adonde lleva el QR. Consulta los eventos nuevos cada 4 s y, cuando entra uno, relee la subasta (así se ven las extensiones del anti-sniping). Muestra el historial con cada reembolso y enlaces a stellar.expert. Cuando la pestaña no está visible, deja de consultar.
-- `/empezar`: onboarding del jurado en cuatro pasos (conectar wallet, XLM con Friendbot, trustline USDC y 100 USDC de prueba). Se puede retomar en cualquier paso: lee el estado real de la cuenta en Testnet.
-- `/qr`: hoja para imprimir, con un QR por obra. Los QR apuntan al dominio desde el que se abre la hoja, así que hay que imprimirla desde la URL pública (en localhost muestra un aviso).
+- `/`: la muestra, con cada obra enmarcada y su estado en vivo (puja actual o precio base).
+- `/obra/[slug]`: la ficha, adonde lleva el QR. Panel en vivo con cuenta regresiva y aviso de anti-sniping, oferta en 2 toques, aviso de "te superaron", registro de la puja, liquidación con reparto y reclamo de reembolso pendiente. Debajo, el reparto explicado, el cierre previsto y el link al contrato.
+- `/empezar`: prepara la cuenta paso a paso (activar en Testnet, habilitar USDC, recibir 200 USDC de prueba).
+- `/api/faucet`: entrega USDC de prueba (ver más abajo).
+- `/qr`: cartelas imprimibles en A4 con QR. Imprimirlas desde la URL pública (en localhost muestra un aviso).
 
-Los colores y las tipografías son los de la identidad de G3 (`docs/slides/`) y están definidos como tokens en `app/globals.css` (`cal`, `papel`, `tinta`, `piedra`, `linea`, `malbec`, `ocre`).
+Los colores y las tipografías son los de la identidad de G3 (`docs/slides/`), definidos como tokens en `app/globals.css` (`cal`, `papel`, `tinta`, `piedra`, `linea`, `malbec`, `ocre`).
 
 ## Wallet
 
-`components/wallet-provider.tsx` expone `useWallet()` con `address`, `connect`, `disconnect` y `signTransaction`. Usa Stellar Wallets Kit v2 (desde JSR, ver `.npmrc`) con Albedo y Varial (ex Freighter), según la decisión D3.
+`components/wallet-provider.tsx` expone `useWallet()` con `address`, `walletKind`, `connect`, `disconnect` y `signTransaction`. `connect()` abre el diálogo de login (`components/wallet/login-dialog.tsx`):
 
-`components/bid-form.tsx` precarga la oferta mínima y delega la operación en `lib/bid.ts`. Antes de abrir la wallet, comprueba que la cuenta exista en Testnet y tenga XLM, trustline y USDC suficientes. Después simula `bid`, pide una sola firma, envía y espera la confirmación. Traduce a español el rechazo de firma, red equivocada, oferta superada, subasta cerrada, saldo insuficiente, transacción expirada y cuenta ocupada, y bloquea los envíos dobles. Al confirmar muestra el hash en stellar.expert y fuerza una actualización de la ficha. Si falta XLM, trustline o USDC, enlaza a `/empezar`.
+- **Huella, Face ID o PIN (passkey con PRF)**: deriva una wallet Stellar de la passkey (`lib/passkey-wallet.ts`); la misma passkey devuelve siempre la misma cuenta. La clave vive solo en memoria.
+- **Cuenta en este dispositivo**: si el navegador no soporta passkeys (o la web se abre desde una IP, como el preview en `127.0.0.1`), la wallet queda guardada en el navegador. Es Testnet.
+- **Albedo o Freighter/Varial**: vía Stellar Wallets Kit v2 (desde JSR, ver `.npmrc`).
 
-## USDC de prueba (B6)
+Después de entrar con passkey o dispositivo, `prepareAccount` (`lib/onboarding.ts`) deja la cuenta lista sola: Friendbot, trustline y 200 USDC de prueba.
 
-`POST /api/test-usdc` con `{ "address": "G…" }` envía 100 USDC de prueba desde la cuenta distribuidora de G1. Usa `USDC_DISTRIBUTOR_SECRET`, que solo existe en el servidor (`web/.env.local` y variables de Vercel); si falta, responde 503.
+La cuenta "en este dispositivo" guarda su secret key en `localStorage`: sirve solo para Testnet y cualquier script que corra en la página podría leerla.
+
+## USDC de prueba (`/api/faucet`)
+
+`POST /api/faucet` con `{ "address": "G…" }` completa el saldo hasta 200 USDC de prueba desde la cuenta distribuidora de G1. Usa `USDC_DISTRIBUTOR_SECRET`, que solo existe en el servidor (`web/.env.local` y variables de Vercel, nunca `NEXT_PUBLIC_`); si falta, responde 503.
 
 - Una entrega por cuenta: el pago va en la misma transacción que una entrada `manageData` (`u:<cuenta>`) en la distribuidora. La marca es pública y no hace falta una base de datos. Cada marca bloquea 0,5 XLM de reserva en la distribuidora.
-- Si la cuenta ya recibió USDC, responde `alreadyClaimed: true` sin mover fondos.
-- Rechaza pedidos de otro origen y limita a 5 por minuto por IP. El límite vive en memoria por instancia y es solo un freno; el tope real es la marca.
+- Si la cuenta ya recibió USDC, responde `{ funded: false, alreadyClaimed: true }` sin mover fondos, y el onboarding da el paso por hecho con el saldo que quede.
+- Rechaza pedidos de otro origen y limita a un envío por minuto por cuenta y por IP. Ese límite vive en memoria por instancia y es solo un freno; el tope real es la marca.
