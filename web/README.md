@@ -15,6 +15,22 @@ npm run dev                  # http://localhost:3000
 
 `npm run build` y `npm run lint` antes de abrir el PR.
 
+## Pruebas de punta a punta
+
+Playwright en viewport de celular (Pixel 7) contra Testnet real. Por defecto apuntan a producción; `E2E_BASE_URL` cambia el destino (por ejemplo, `http://localhost:3000` con `npm run dev` o un preview de Vercel).
+
+```bash
+npx playwright install chromium   # una vez
+npm run test:e2e
+```
+
+- `muestra.spec.ts`: portada, ficha en vivo de cada obra, 404 y hoja de QR. Solo lectura.
+- `oferta.spec.ts`: el formulario precarga la oferta mínima y valida montos. No envía nada.
+- `onboarding.spec.ts`: crea una cuenta descartable en el dispositivo y espera los 200 USDC de prueba (usa la faucet una vez por corrida), y prueba que la faucet rechace otros orígenes y direcciones inválidas.
+- `pujas.spec.ts`: dos cuentas ofertan en la misma obra y la primera ve el reembolso. **Hace ofertas reales**: bloquea USDC de prueba en la subasta y le sube el precio, así que solo corre con `E2E_BIDS=1` (y `E2E_BID_SLUG=<slug>` para elegir la obra; por defecto, la última).
+
+Corren de a una: la faucet acepta un pedido por minuto por IP y las pruebas comparten subastas. Si un pedido choca con ese límite, el ayudante espera un minuto y reintenta.
+
 ## Deploy (B7)
 
 Producción: **https://rematarte.vercel.app** (proyecto `rematarte` en Vercel, Root Directory `web`, preset Next.js). Ese dominio es público; las URLs generadas por cada deploy piden login de Vercel.
