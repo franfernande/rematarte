@@ -26,6 +26,20 @@ npm run dev                  # http://localhost:3000
 
 `deploy.testnet.json` ya está en el repo (deploy de G1 en Testnet). Mientras G3 no suba `obras.json`, se usa `data/mocks/obras.json`, con los mismos slugs que las subastas desplegadas (`scripts/obras.sample.json`), y la portada muestra un aviso de datos de prueba. Si un JSON no respeta el formato, el build falla con el campo que está mal.
 
+## Contrato
+
+`lib/stellar.ts` es el punto de entrada al contrato de subastas (I1). Sirve en el servidor y en el navegador; recibe la config de `getDeploy()` como parámetro.
+
+- `auctionClient(deploy, signer?)`: cliente tipado. Sin `signer` solo simula lecturas; para ofertar se le pasa `{ publicKey: address, signTransaction }` de `useWallet()`.
+- `getAuction` y `getAuctionsBySlug`: leen por simulación, sin wallet. `getAuctionsBySlug` deja afuera las subastas que no están en `subastas` (por ejemplo, la del smoke test de G1).
+- `minimumBid` (regla de I1), `auctionStatus`, `parseUsdc` / `formatUsdc` (7 decimales, con `bigint`), `contractErrorMessage` (errores 1–9 en español) y `explorerUrl` (stellar.expert).
+
+El cliente usa los bindings que genera G1 (`scripts/bindings.sh`), copiados en `lib/contract/auction.ts`. No se instalan como paquete porque fijan `@stellar/stellar-sdk` 16 y la web usa la 17. Si G1 cambia el contrato, regenerar los bindings y correr:
+
+```bash
+npm run bindings:sync
+```
+
 ## Wallet
 
 `components/wallet-provider.tsx` expone `useWallet()` con `address`, `connect`, `disconnect` y `signTransaction`. Usa Stellar Wallets Kit v2 (desde JSR, ver `.npmrc`) con Albedo y Varial (ex Freighter), según la decisión D3.
