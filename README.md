@@ -93,7 +93,7 @@ Paquete oficial completo ([`stellar/stellar-dev-skill`](https://github.com/stell
 | Skill | Para qué la usamos |
 |---|---|
 | `smart-contracts` | Escribir, testear y desplegar el contrato Soroban de la subasta (storage, auth, eventos, seguridad, testing) |
-| `dapp` | Frontend: conectar wallets (Wallets Kit/Freighter, o Blux con email/passkey), firmar y enviar transacciones, invocar el contrato |
+| `dapp` | Frontend: conectar wallets (Wallets Kit con Albedo y Varial, ex Freighter), firmar y enviar transacciones, invocar el contrato |
 | `assets` | USDC clásico + trustlines + puente SAC para que el contrato use el token |
 | `data` | Leer estado y eventos del contrato vía Stellar RPC |
 | `standards` | Elegir los SEP correctos (SEP-41 tokens, etc.) y referencias del ecosistema |
