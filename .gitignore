@@ -1,0 +1,23 @@
+# Node / frontend
+node_modules/
+dist/
+.next/
+out/
+
+# Rust / Soroban
+target/
+*.wasm
+
+# Env y secretos
+.env
+.env.*
+!.env.example
+
+# Config local de Devin (claves personales)
+.devin/mcp_config.local.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
