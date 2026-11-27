@@ -14,7 +14,13 @@ Leé primero `README.md`: problema, idea, alcance del MVP y requisitos de entreg
 - **Skills de Stellar** en `.devin/skills/` y `.cursor/skills/`:
   `smart-contracts` (Soroban), `dapp` (SDK + wallets), `assets` (USDC/SAC),
   `data` (RPC/Horizon), `standards` (SEPs). Usá `smart-contracts` para tocar
-  `contracts/` y `dapp` para `web/`.
+  `contracts/` y `dapp` para `web/`. `agentic-payments`, `cross-chain` y
+  `zk-proofs` están instaladas pero quedan fuera del MVP.
+- **Skills de la comunidad**: `soroban-common-mistakes` para revisar el contrato
+  antes de cada deploy.
+- **Skills para la web (G2)**: `nextjs-senior` (App Router, límite servidor/cliente),
+  `deploy-to-vercel`, `webapp-testing` (Playwright en viewport mobile),
+  `frontend-design` y `web-design-guidelines` (diseño y accesibilidad de la UI).
 - **MCP**: `stellar-raven` (docs + ecosistema en vivo) ya configurado en
   `.devin/mcp_config.json` y `.cursor/mcp.json`; requiere OAuth una vez.
 - **Nunca** hardcodear secret keys ni commitear `.env`. Testnet usa Friendbot.
