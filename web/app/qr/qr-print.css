@@ -1,0 +1,99 @@
+.qr-svg svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 10mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  body > header,
+  body > footer,
+  .qr-screen-header {
+    display: none !important;
+  }
+
+  main {
+    display: block !important;
+  }
+
+  .qr-page {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .qr-list {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .qr-card {
+    position: relative;
+    width: 100%;
+    min-height: 126mm;
+    margin: 0 0 8mm;
+    padding: 8mm 9mm;
+    overflow: hidden;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qr-card:nth-of-type(2n) {
+    margin-bottom: 0;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .qr-card:last-of-type {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .qr-card::after {
+    content: "";
+    position: absolute;
+    inset: 2.5mm;
+    border: 0.3mm dashed rgb(138 130 121 / 0.42);
+    pointer-events: none;
+  }
+
+  .qr-card-main {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 9mm !important;
+  }
+
+  .qr-card h2 {
+    font-size: 9mm !important;
+    line-height: 1.05 !important;
+  }
+
+  .qr-figure {
+    width: 58mm !important;
+    max-width: 58mm !important;
+    margin: 0 !important;
+  }
+
+  .qr-svg {
+    padding: 2mm !important;
+  }
+}

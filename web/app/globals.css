@@ -1,26 +1,92 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Paleta de sala de muestra (misma que docs/slides): pared de cal, tinta, malbec y ocre de Mendoza. */
+@theme {
+  --color-cal: #f2ede4;
+  --color-cal-2: #e9e2d6;
+  --color-papel: #fbf8f2;
+  --color-tinta: #1e1b18;
+  --color-tinta-2: #4a443d;
+  --color-piedra: #8a8279;
+  --color-linea: #d6cdbf;
+  --color-malbec: #6e1a37;
+  --color-malbec-2: #8f2a4c;
+  --color-ocre: #b8863b;
+  --color-noche: #141210;
+  --color-exito: #2f6b4a;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --font-serif: var(--font-instrument-serif), "Iowan Old Style", Georgia, serif;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --animate-aparecer: aparecer 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-latido: latido 1.6s ease-in-out infinite;
+
+  @keyframes aparecer {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes latido {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  html {
+    background: var(--color-cal);
+    color: var(--color-tinta);
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    font-family: var(--font-sans);
+    background:
+      radial-gradient(1200px 600px at 50% -200px, rgb(255 255 255 / 0.6), transparent 70%),
+      var(--color-cal);
+  }
+  ::selection {
+    background: var(--color-malbec);
+    color: var(--color-cal);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-malbec);
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  /* Etiqueta en versalitas espaciadas, como las cartelas de museo. */
+  .etiqueta {
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--color-piedra);
+  }
+  /* Cartela de museo: papel, filete y sombra corta. */
+  .cartela {
+    background: var(--color-papel);
+    border: 1px solid var(--color-linea);
+    box-shadow: 0 1px 0 rgb(0 0 0 / 0.04), 0 12px 28px -20px rgb(0 0 0 / 0.35);
+  }
+  /* Marco de cuadro con paspartú. */
+  .marco {
+    background: #2a211c;
+    padding: 0.75rem;
+    box-shadow: inset 0 0 0 2px #4b3a2f, 0 30px 50px -30px rgb(0 0 0 / 0.55), 0 4px 10px -4px rgb(0 0 0 / 0.25);
+  }
+  .paspartu {
+    background: #f7f3ec;
+    padding: 1.25rem;
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

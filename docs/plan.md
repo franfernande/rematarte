@@ -188,17 +188,17 @@ Dueño de `contracts/`, `scripts/`, `web/data/deploy.testnet.json`. Usar la skil
 Dueño de `web/` (excepto `web/data/obras.json`, `web/public/obras/` y `web/data/deploy.testnet.json`). Usar las skills `dapp` (`react.md`, `data-fetching.md`) y `data`.
 
 - [x] **B1. Scaffold**: Next.js (App Router) + TypeScript + Tailwind, mobile-first, UI en español. `@stellar/stellar-sdk` y Stellar Wallets Kit v2 (`npx jsr add @creit-tech/stellar-wallets-kit`). Mock de `deploy.testnet.json` y de `obras.json` si todavía no existen.
-- [ ] **B2. `web/lib/stellar.ts`**: lee `deploy.testnet.json`; cliente del contrato vía `stellar contract bindings typescript` (cuando G1 tenga el WASM) o `contract.Client.from` con la interfaz I1.
-- [ ] **B3. Lectura sin wallet**: la ficha lee `get_auction` por simulación (sin conectar nada); polling corto y feed de ofertas con `getEvents` (eventos de I1).
-- [ ] **B4. Páginas**
+- [x] **B2. `web/lib/stellar.ts`**: lee `deploy.testnet.json`; cliente del contrato vía `stellar contract bindings typescript` (cuando G1 tenga el WASM) o `contract.Client.from` con la interfaz I1.
+- [x] **B3. Lectura sin wallet**: la ficha lee `get_auction` por simulación (sin conectar nada); polling corto y feed de ofertas con `getEvents` (eventos de I1).
+- [x] **B4. Páginas**
   - `/` — la muestra (grilla de obras con estado).
   - `/obra/[slug]` — foto, título, artista, técnica, countdown, puja actual o precio mínimo, "ofertá desde X", historial y botón de ofertar.
   - `/empezar` — onboarding (B6).
   - `/qr` — hoja imprimible con un QR por obra apuntando a `/obra/[slug]`.
-- [ ] **B5. Ofertar en 2 toques**: monto precargado con la oferta mínima → firmar → `signAndSend` → estado + link al explorador. Errores: wallet no conectada, firma rechazada, red equivocada, saldo de XLM/USDC insuficiente, cuenta sin fondear, tx expirada, doble envío.
-- [ ] **B6. Onboarding del jurado** (`/empezar`): conectar wallet → fondear con Friendbot → crear trustline USDC → "Recibir USDC de prueba" (API route que firma con `USDC_DISTRIBUTOR_SECRET`, con tope por cuenta).
+- [x] **B5. Ofertar en 2 toques**: monto precargado con la oferta mínima → firmar → `signAndSend` → estado + link al explorador. Errores: wallet no conectada, firma rechazada, red equivocada, saldo de XLM/USDC insuficiente, cuenta sin fondear, tx expirada, doble envío.
+- [x] **B6. Onboarding del jurado** (`/empezar`): conectar wallet → fondear con Friendbot → crear trustline USDC → "Recibir USDC de prueba" (API route que firma con `USDC_DISTRIBUTOR_SECRET`, con tope por cuenta).
 - [ ] **B7. Deploy en Vercel** (HTTPS para que los QR abran en el celu) con `USDC_DISTRIBUTOR_SECRET` configurada. Pasar la URL a G3.
-- [ ] **B8. (Deseable) Liquidación visible**: botón "Liquidar" tras el cierre y comprobante del reparto artista/espacio con link a stellar.expert.
+- [x] **B8. (Deseable) Liquidación visible**: botón "Liquidar" tras el cierre y comprobante del reparto artista/espacio con link a stellar.expert.
 
 ## G3 — Producto, contenido y entrega
 
