@@ -1,38 +1,57 @@
-import { dataSources, getObras } from "@/lib/data";
-
-const cierreFormat = new Intl.DateTimeFormat("es-AR", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "America/Argentina/Mendoza",
-});
+import Image from "next/image";
+import Link from "next/link";
+import { AuctionSummary, LiveAuctionsProvider } from "@/components/live-auctions";
+import { dataSources, getDeploy, getObras } from "@/lib/data";
 
 export default function Home() {
   const obras = getObras();
   const usingMocks = dataSources.obras === "mock";
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col gap-6 px-4 py-6">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8">
       {usingMocks && (
-        <p className="rounded-lg bg-amber-100 px-3 py-2 text-sm text-amber-900">
+        <p className="border-l-2 border-ocre bg-papel px-3 py-2 text-sm text-tinta-2">
           Datos de prueba: todavía no está el <code>obras.json</code> real.
         </p>
       )}
 
-      <h1 className="text-2xl font-semibold">La muestra</h1>
+      <header className="flex max-w-2xl flex-col gap-3">
+        <h1 className="font-serif text-4xl leading-tight">La muestra</h1>
+        <p className="font-serif text-lg leading-relaxed text-tinta-2">
+          Cada obra se remata en USDC sobre Stellar. Ofertar es depositar: si alguien te supera, el contrato te
+          devuelve la plata en la misma transacción.
+        </p>
+      </header>
 
-      <ul className="flex flex-col gap-3">
-        {obras.map((obra) => (
-          <li key={obra.slug} className="rounded-lg border border-foreground/10 p-4">
-            <h2 className="font-medium">{obra.titulo}</h2>
-            <p className="text-sm text-foreground/70">
-              {obra.artista} · {obra.tecnica}
-            </p>
-            <p className="mt-2 text-sm">
-              Precio mínimo: {obra.precioMinimoUsdc} USDC · Cierra {cierreFormat.format(new Date(obra.cierre))}
-            </p>
-          </li>
-        ))}
-      </ul>
+      <LiveAuctionsProvider deploy={getDeploy()}>
+        <ul className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {obras.map((obra) => (
+            <li key={obra.slug}>
+              <Link href={`/obra/${obra.slug}`} className="group flex flex-col">
+                <div className="relative aspect-[4/3] w-full bg-cal-2">
+                  <Image
+                    src={obra.imagen}
+                    alt=""
+                    fill
+                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    unoptimized={obra.imagen.endsWith(".svg")}
+                    className="object-contain p-3 transition-transform duration-300 motion-safe:group-hover:scale-[1.02]"
+                  />
+                </div>
+                <div className="flex flex-col gap-2 border border-t-0 border-linea bg-papel p-4 group-hover:border-piedra">
+                  <div>
+                    <h2 className="font-serif text-xl leading-snug italic">{obra.titulo}</h2>
+                    <p className="text-sm">
+                      <span className="font-semibold">{obra.artista}</span>, {obra.anio}
+                    </p>
+                  </div>
+                  <AuctionSummary slug={obra.slug} />
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </LiveAuctionsProvider>
     </div>
   );
 }

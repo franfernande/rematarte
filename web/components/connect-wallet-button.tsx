@@ -2,10 +2,7 @@
 
 import { useState } from "react";
 import { useWallet } from "@/components/wallet-provider";
-
-function shortAddress(address: string): string {
-  return `${address.slice(0, 4)}…${address.slice(-4)}`;
-}
+import { shortAddress } from "@/lib/stellar";
 
 export function ConnectWalletButton() {
   const { address, connecting, connect, disconnect } = useWallet();
@@ -23,13 +20,13 @@ export function ConnectWalletButton() {
   if (address) {
     return (
       <div className="flex items-center gap-2">
-        <span className="font-mono text-sm" title={address}>
+        <span className="font-mono text-sm text-tinta-2" title={address}>
           {shortAddress(address)}
         </span>
         <button
           type="button"
           onClick={() => void disconnect()}
-          className="min-h-11 rounded-full border border-foreground/20 px-4 text-sm"
+          className="min-h-11 rounded-full border border-linea px-4 text-sm hover:border-piedra"
         >
           Desconectar
         </button>
@@ -43,12 +40,12 @@ export function ConnectWalletButton() {
         type="button"
         onClick={() => void handleConnect()}
         disabled={connecting}
-        className="min-h-11 rounded-full bg-foreground px-4 text-sm font-medium text-background disabled:opacity-60"
+        className="min-h-11 rounded-full bg-malbec px-4 text-sm font-medium text-cal hover:bg-malbec-2 disabled:opacity-60"
       >
         {connecting ? "Conectando…" : "Conectar wallet"}
       </button>
       {error && (
-        <p role="alert" className="text-xs text-red-600">
+        <p role="alert" className="text-xs text-malbec">
           {error}
         </p>
       )}
