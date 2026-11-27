@@ -189,8 +189,8 @@ Dueño de `web/` (excepto `web/data/obras.json`, `web/public/obras/` y `web/data
 
 - [x] **B1. Scaffold**: Next.js (App Router) + TypeScript + Tailwind, mobile-first, UI en español. `@stellar/stellar-sdk` y Stellar Wallets Kit v2 (`npx jsr add @creit-tech/stellar-wallets-kit`). Mock de `deploy.testnet.json` y de `obras.json` si todavía no existen.
 - [x] **B2. `web/lib/stellar.ts`**: lee `deploy.testnet.json`; cliente del contrato vía `stellar contract bindings typescript` (cuando G1 tenga el WASM) o `contract.Client.from` con la interfaz I1.
-- [~] **B3. Lectura sin wallet**: la ficha lee `get_auction` por simulación (sin conectar nada); polling corto y feed de ofertas con `getEvents` (eventos de I1).
-- [~] **B4. Páginas**
+- [x] **B3. Lectura sin wallet**: la ficha lee `get_auction` por simulación (sin conectar nada); polling corto y feed de ofertas con `getEvents` (eventos de I1).
+- [x] **B4. Páginas**
   - `/` — la muestra (grilla de obras con estado).
   - `/obra/[slug]` — foto, título, artista, técnica, countdown, puja actual o precio mínimo, "ofertá desde X", historial y botón de ofertar.
   - `/empezar` — onboarding (B6).
