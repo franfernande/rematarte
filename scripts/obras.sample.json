@@ -1,0 +1,44 @@
+[
+  {
+    "slug": "atardecer-en-uspallata",
+    "titulo": "Atardecer en Uspallata",
+    "artista": "Nombre Apellido",
+    "tecnica": "Óleo sobre tela",
+    "medidas": "60 × 80 cm",
+    "anio": 2025,
+    "descripcion": "Texto corto para la ficha.",
+    "imagen": "/obras/atardecer-en-uspallata.jpg",
+    "precioMinimoUsdc": 50,
+    "incrementoMinimoUsdc": 5,
+    "porcentajeArtista": 80,
+    "cierre": "2026-12-20T20:00:00-03:00"
+  },
+  {
+    "slug": "vinedos-al-sur",
+    "titulo": "Viñedos al sur",
+    "artista": "Nombre Apellido",
+    "tecnica": "Acrílico sobre lienzo",
+    "medidas": "50 × 70 cm",
+    "anio": 2024,
+    "descripcion": "Texto corto para la ficha.",
+    "imagen": "/obras/vinedos-al-sur.jpg",
+    "precioMinimoUsdc": 35,
+    "incrementoMinimoUsdc": 5,
+    "porcentajeArtista": 80,
+    "cierre": "2026-12-20T20:10:00-03:00"
+  },
+  {
+    "slug": "cerro-en-calma",
+    "titulo": "Cerro en calma",
+    "artista": "Nombre Apellido",
+    "tecnica": "Acuarela sobre papel",
+    "medidas": "40 × 55 cm",
+    "anio": 2025,
+    "descripcion": "Texto corto para la ficha.",
+    "imagen": "/obras/cerro-en-calma.jpg",
+    "precioMinimoUsdc": 25,
+    "incrementoMinimoUsdc": 2.5,
+    "porcentajeArtista": 75,
+    "cierre": "2026-12-20T20:20:00-03:00"
+  }
+]
