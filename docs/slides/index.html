@@ -1,0 +1,1077 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RematArte — Pitch</title>
+<style>
+:root {
+  --paper: #f4eee3;
+  --paper-2: #fbf7ef;
+  --ink: #201b16;
+  --muted: #62584d;
+  --accent: #8c3b2e;
+  --accent-dark: #6f2b21;
+  --line: #d8cbbb;
+  --white: #fffaf1;
+  --scale: 1;
+}
+
+* { box-sizing: border-box; }
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background:
+    radial-gradient(circle at 16% 12%, rgba(140, 59, 46, 0.07), transparent 28%),
+    radial-gradient(circle at 88% 82%, rgba(140, 59, 46, 0.05), transparent 30%),
+    linear-gradient(180deg, #f8f2e8 0%, var(--paper) 100%);
+}
+
+#app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#deck {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1280px;
+  height: 720px;
+  margin: -360px 0 0 -640px;
+  padding: 62px 78px 56px;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(255, 250, 241, 0.94), rgba(251, 247, 239, 0.88)),
+    repeating-linear-gradient(90deg, rgba(32, 27, 22, 0.018) 0 1px, transparent 1px 9px),
+    var(--paper-2);
+  border: 1px solid rgba(140, 59, 46, 0.20);
+  box-shadow: 0 28px 70px rgba(32, 27, 22, 0.20);
+  transform: scale(var(--scale));
+  transform-origin: center center;
+}
+
+.slide.active { display: flex; }
+
+.slide::before {
+  content: "";
+  position: absolute;
+  left: 78px;
+  right: 78px;
+  top: 34px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(140, 59, 46, 0.36), transparent);
+}
+
+.slide::after {
+  content: "";
+  position: absolute;
+  left: 78px;
+  right: 78px;
+  bottom: 28px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), transparent 34%);
+  opacity: 0.55;
+}
+
+h1,
+h2,
+h3,
+p,
+blockquote,
+ul {
+  margin-top: 0;
+}
+
+h1,
+h2,
+h3,
+.tagline,
+.closing {
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+h1 {
+  margin-bottom: 28px;
+  font-size: 102px;
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+}
+
+h2 {
+  margin-bottom: 34px;
+  font-size: 60px;
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+}
+
+h3 {
+  margin-bottom: 12px;
+  font-size: 30px;
+  line-height: 1.12;
+}
+
+.kicker {
+  margin-bottom: 20px;
+  color: var(--accent);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.lead {
+  max-width: 720px;
+  margin-bottom: 24px;
+  font-size: 35px;
+  line-height: 1.24;
+}
+
+.tagline {
+  margin-bottom: 34px;
+  color: var(--accent-dark);
+  font-size: 31px;
+  line-height: 1.3;
+}
+
+.team,
+.repo-link,
+.small-muted {
+  color: var(--muted);
+}
+
+.team {
+  margin-bottom: 0;
+  font-size: 22px;
+}
+
+.repo-link {
+  display: inline-block;
+  margin-top: 18px;
+  font-size: 17px;
+  text-decoration-color: rgba(140, 59, 46, 0.45);
+  text-underline-offset: 4px;
+}
+
+a {
+  color: var(--accent-dark);
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 4px solid rgba(140, 59, 46, 0.45);
+  outline-offset: 3px;
+}
+
+.placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 13px 18px;
+  color: var(--accent-dark);
+  font-weight: 800;
+  text-align: center;
+  background: rgba(140, 59, 46, 0.075);
+  border: 3px dashed var(--accent);
+  border-radius: 4px;
+}
+
+.qr-box {
+  width: 292px;
+  height: 292px;
+  padding: 26px;
+  font-size: 21px;
+  line-height: 1.35;
+}
+
+.title-layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  gap: 62px;
+  align-items: center;
+}
+
+.qr-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 250, 241, 0.62);
+  box-shadow: inset 0 0 0 10px rgba(140, 59, 46, 0.035);
+}
+
+.problem-copy {
+  max-width: 940px;
+  font-size: 39px;
+  line-height: 1.26;
+}
+
+.problem-copy p {
+  margin-bottom: 22px;
+}
+
+.problem-copy .strong {
+  color: var(--accent-dark);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 55px;
+  font-weight: 700;
+}
+
+blockquote {
+  margin: 42px 0 34px;
+  padding: 24px 30px;
+  color: var(--accent-dark);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 36px;
+  line-height: 1.25;
+  border-left: 8px solid var(--accent);
+  background: rgba(140, 59, 46, 0.055);
+}
+
+.data-callout {
+  width: fit-content;
+  max-width: 900px;
+  font-size: 21px;
+}
+
+.audience-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  margin: 30px 0 42px;
+}
+
+.audience-card {
+  min-height: 190px;
+  padding: 30px 26px;
+  display: flex;
+  align-items: flex-end;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 38px;
+  font-weight: 700;
+  background:
+    linear-gradient(180deg, transparent 0%, rgba(140, 59, 46, 0.08) 100%),
+    var(--white);
+  border: 1px solid var(--line);
+  border-top: 9px solid var(--accent);
+  box-shadow: 0 12px 26px rgba(32, 27, 22, 0.08);
+}
+
+.center-line {
+  font-size: 34px;
+  line-height: 1.3;
+}
+
+.why-art {
+  margin-top: 20px;
+  color: var(--accent-dark);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 36px;
+  font-weight: 700;
+}
+
+.steps {
+  position: relative;
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  align-items: stretch;
+  margin-top: 24px;
+}
+
+.step {
+  position: relative;
+  min-height: 330px;
+  padding: 26px 22px 24px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 26px rgba(32, 27, 22, 0.075);
+}
+
+.step:not(:last-child)::after {
+  content: "→";
+  position: absolute;
+  right: -24px;
+  top: 142px;
+  z-index: 2;
+  width: 24px;
+  color: var(--accent);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 42px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.step-number {
+  display: inline-flex;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 28px;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 28px;
+  font-weight: 700;
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+.step h3 {
+  color: var(--accent-dark);
+  font-size: 29px;
+}
+
+.step p {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 1.32;
+}
+
+.demo-layout {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.demo-layout h2 {
+  margin-bottom: 8px;
+}
+
+.scan-line {
+  margin-bottom: 28px;
+  color: var(--accent-dark);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 42px;
+  font-weight: 700;
+}
+
+.demo-qr {
+  width: 330px;
+  height: 330px;
+  margin-bottom: 24px;
+  font-size: 23px;
+}
+
+.url-placeholder {
+  min-width: 430px;
+  font-size: 20px;
+}
+
+.stellar-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-top: 8px;
+}
+
+.feature {
+  min-height: 142px;
+  padding: 25px 28px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-left: 8px solid var(--accent);
+}
+
+.feature strong {
+  display: block;
+  margin-bottom: 8px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 33px;
+  line-height: 1.1;
+}
+
+.feature span {
+  color: var(--muted);
+  font-size: 22px;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 34px;
+}
+
+.badge {
+  padding: 12px 18px;
+  color: var(--white);
+  font-size: 19px;
+  font-weight: 800;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.evidence-intro {
+  margin-bottom: 22px;
+  color: var(--muted);
+  font-size: 21px;
+}
+
+.contract-row {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 18px 20px;
+  background: rgba(140, 59, 46, 0.055);
+  border: 1px solid var(--line);
+}
+
+.contract-row .label,
+.tx-action {
+  font-weight: 800;
+}
+
+.mono,
+.tx-hash {
+  font-family: "Consolas", "Courier New", monospace;
+}
+
+.contract-link {
+  font-size: 20px;
+  overflow-wrap: anywhere;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tx-row {
+  display: grid;
+  grid-template-columns: 245px minmax(0, 1fr) 220px;
+  gap: 18px;
+  align-items: center;
+  padding: 15px 18px;
+  color: var(--ink);
+  text-decoration: none;
+  background: var(--white);
+  border: 1px solid var(--line);
+}
+
+.tx-row:hover {
+  border-color: var(--accent);
+  box-shadow: 0 7px 18px rgba(32, 27, 22, 0.08);
+}
+
+.tx-action {
+  color: var(--accent-dark);
+  font-size: 19px;
+}
+
+.tx-desc {
+  color: var(--muted);
+  font-size: 18px;
+}
+
+.tx-hash {
+  color: var(--accent-dark);
+  font-size: 18px;
+  font-weight: 800;
+  text-align: right;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.evidence-foot {
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.two-col {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 34px;
+  min-height: 0;
+}
+
+.panel {
+  padding: 28px 30px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 26px rgba(32, 27, 22, 0.065);
+}
+
+.panel h3 {
+  color: var(--accent-dark);
+  font-size: 32px;
+}
+
+.validation-placeholders {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.validation-placeholders .placeholder {
+  justify-content: flex-start;
+  min-height: 58px;
+  font-size: 19px;
+  text-align: left;
+}
+
+.next-list {
+  margin: 24px 0 0;
+  padding-left: 28px;
+  font-size: 24px;
+  line-height: 1.5;
+}
+
+.next-list li::marker {
+  color: var(--accent);
+}
+
+.closing {
+  margin: 24px 0 0;
+  color: var(--accent-dark);
+  font-size: 31px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.notes {
+  display: none;
+}
+
+#notesPanel {
+  flex: 0 0 auto;
+  max-height: 31vh;
+  overflow: auto;
+  padding: 16px 32px 18px;
+  color: #fff7ea;
+  font-size: 16px;
+  line-height: 1.48;
+  background: #211c17;
+  border-top: 4px solid var(--accent);
+  box-shadow: 0 -12px 30px rgba(32, 27, 22, 0.25);
+}
+
+#notesPanel[hidden] {
+  display: none;
+}
+
+#notesPanel p {
+  margin: 0 0 0.65em;
+}
+
+#notesPanel p:last-child {
+  margin-bottom: 0;
+}
+
+.hud {
+  position: fixed;
+  top: 14px;
+  right: 16px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px;
+  color: var(--ink);
+  font-size: 13px;
+  background: rgba(251, 247, 239, 0.90);
+  border: 1px solid rgba(140, 59, 46, 0.25);
+  border-radius: 999px;
+  box-shadow: 0 7px 20px rgba(32, 27, 22, 0.10);
+  backdrop-filter: blur(6px);
+}
+
+#counter {
+  min-width: 54px;
+  padding: 0 5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  text-align: center;
+}
+
+.hud button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--white);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  background: var(--accent);
+  border: 0;
+  border-radius: 50%;
+}
+
+.hud button[aria-pressed="true"] {
+  color: var(--accent-dark);
+  background: var(--white);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.hint {
+  position: fixed;
+  left: 18px;
+  bottom: 12px;
+  z-index: 20;
+  color: rgba(32, 27, 22, 0.62);
+  font-size: 12px;
+}
+
+body.notes-open .hint {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .hud {
+    top: 8px;
+    right: 8px;
+    transform: scale(0.88);
+    transform-origin: top right;
+  }
+
+  .hint {
+    display: none;
+  }
+}
+
+@media print {
+  @page {
+    size: 13.333in 7.5in;
+    margin: 0;
+  }
+
+  html,
+  body {
+    height: auto;
+    overflow: visible;
+    background: #fff;
+  }
+
+  #app {
+    height: auto;
+    display: block;
+  }
+
+  #deck {
+    position: static;
+    overflow: visible;
+  }
+
+  .slide,
+  .slide.active {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: 13.333in;
+    height: 7.5in;
+    margin: 0;
+    display: flex !important;
+    overflow: hidden;
+    box-shadow: none;
+    border: 0;
+    transform: none;
+    page-break-after: always;
+    break-inside: avoid;
+  }
+
+  .slide:last-child {
+    page-break-after: auto;
+  }
+
+  .hud,
+  .hint,
+  #notesPanel,
+  .notes {
+    display: none !important;
+  }
+}
+</style>
+</head>
+<body>
+<div class="hud" aria-label="Controles del deck">
+  <button type="button" id="prevBtn" aria-label="Slide anterior">‹</button>
+  <span id="counter" aria-live="polite">1 / 8</span>
+  <button type="button" id="nextBtn" aria-label="Slide siguiente">›</button>
+  <button type="button" id="notesBtn" aria-label="Mostrar u ocultar notas" aria-pressed="false">N</button>
+  <button type="button" id="fullBtn" aria-label="Entrar o salir de pantalla completa">F</button>
+</div>
+<div class="hint">← → · espacio · clic · swipe · F pantalla completa · N notas</div>
+
+<div id="app">
+  <main id="deck" aria-label="Slides del pitch de RematArte">
+
+    <section class="slide active" aria-label="Slide 1: RematArte">
+      <div class="title-layout">
+        <div>
+          <p class="kicker">Sin Coordenadas | Argentina · Eje I Arte</p>
+          <h1>RematArte</h1>
+          <p class="lead">Ofertar es depositar. Perder es recuperar al instante.</p>
+          <p class="tagline">«La obra cuelga en la pared. La puja vive en la cadena.»</p>
+          <p class="team">Fran Fernández · Antonio Chocobar · Sebastián Villarreal</p>
+        </div>
+        <div class="qr-wrap">
+          <div class="placeholder qr-box">[COMPLETAR: QR a la URL de Vercel]</div>
+          <a class="repo-link" target="_blank" rel="noreferrer" href="https://github.com/franfernande/rematarte" title="https://github.com/franfernande/rematarte">github.com/franfernande/rematarte</a>
+        </div>
+      </div>
+      <aside class="notes" aria-label="Notas del orador">
+        <p>RematArte convierte cada obra de una muestra en una subasta con respaldo real: ofertar es depositar, perder es recuperar la plata al instante y ganar significa que el pago ya está depositado y se liquida solo.</p>
+        <p>La obra cuelga en la pared. La puja vive en la cadena. Somos Fran Fernández, Antonio Chocobar y Sebastián Villarreal.</p>
+      </aside>
+    </section>
+
+    <section class="slide" aria-label="Slide 2: Ganar no es pagar">
+      <p class="kicker">Problema real</p>
+      <h2>Ganar no es pagar</h2>
+      <div class="problem-copy">
+        <p>En Mendoza, muchos remates son por Instagram o a mano alzada.</p>
+        <p class="strong">Quien gana no siempre paga.</p>
+        <blockquote>«La promesa de compra no vale nada.»</blockquote>
+      </div>
+      <div class="placeholder data-callout">[COMPLETAR: dato de docs/validacion.md]</div>
+      <aside class="notes" aria-label="Notas del orador">
+        <p>En Mendoza, muchos remates de arte se hacen por Instagram o a mano alzada. Después, quien gana no siempre paga: la artista o el taller queda persiguiendo una transferencia. La promesa de compra no vale nada; solo vale la plata en la cuenta.</p>
+      </aside>
+    </section>
+
+    <section class="slide" aria-label="Slide 3: Para quién">
+      <p class="kicker">Conexión con el eje</p>
+      <h2>Para quién</h2>
+      <div class="audience-grid" aria-label="Artistas, talleres y espacios culturales">
+        <div class="audience-card">Artistas</div>
+        <div class="audience-card">Talleres</div>
+        <div class="audience-card">Espacios culturales</div>
+      </div>
+      <p class="center-line">Venden obra durante una muestra en Mendoza.</p>
+      <p class="why-art">Sin el eje Arte, este proyecto no tiene sentido.</p>
+      <aside class="notes" aria-label="Notas del orador">
+        <p>Es para artistas, talleres y espacios culturales de Mendoza que venden obra durante una muestra. Nace de obra física y de una comunidad concreta: sin el eje Arte, este proyecto no tiene sentido.</p>
+      </aside>
+    </section>
+
+    <section class="slide" aria-label="Slide 4: Cómo funciona">
+      <p class="kicker">La idea</p>
+      <h2>Cómo funciona</h2>
+      <div class="steps">
+        <article class="step">
+          <span class="step-number">1</span>
+          <h3>QR y ficha</h3>
+          <p>Escaneás y ves la puja.</p>
+        </article>
+        <article class="step">
+          <span class="step-number">2</span>
+          <h3>Ofertar es depositar</h3>
+          <p>No es una promesa.</p>
+        </article>
+        <article class="step">
+          <span class="step-number">3</span>
+          <h3>Si te superan</h3>
+          <p>Recuperás al instante.</p>
+        </article>
+        <article class="step">
+          <span class="step-number">4</span>
+          <h3>Al cerrar</h3>
+          <p>Liquida solo, con reparto fijo artista/espacio.</p>
+        </article>
+      </div>
+      <aside class="notes" aria-label="Notas del orador">
+        <p>Son cuatro pasos. Escaneás el QR y abrís la ficha. Ofertar es depositar USDC, no prometer. Si te superan, el contrato te devuelve lo tuyo en la misma transacción. Al cerrar, liquida solo con el reparto fijo entre artista y espacio. Para la artista, la oferta ganadora ya está paga.</p>
+      </aside>
+    </section>
+
+    <section class="slide" aria-label="Slide 5: Demo en vivo">
+      <div class="demo-layout">
+        <h2>Demo en vivo</h2>
+        <p class="scan-line">Escaneá el QR</p>
+        <div class="placeholder qr-box demo-qr">[COMPLETAR: QR a la URL de Vercel]</div>
+        <div class="placeholder url-placeholder">[COMPLETAR: URL de Vercel]</div>
+      </div>
+      <aside class="notes" aria-label="Notas del orador">
+        <p>Cada obra tiene su QR. Lo escaneás y entrás a la ficha sin instalar nada. Acá se ve la obra, cuánto falta y desde qué monto se puede ofertar.</p>
+        <p>Ofertar no es prometer: es depositar. Los USDC quedan respaldados en el contrato. Ahora entra otra oferta. El punto clave: si te superan, no tenés que pedir nada. Tu plata vuelve en la misma transacción.</p>
+        <p>Mientras esta subasta sigue abierta, acá hay otra que ya cerró: cualquiera puede liquidarla. No hace falta perseguir al ganador. Al liquidar, el contrato reparte lo recaudado con el porcentaje fijado antes de empezar. Acá se verifica en la cadena cuánto cobró la artista y cuánto cobró el espacio.</p>
+        <p>La obra cuelga en la pared. La puja vive en la cadena.</p>
+      </aside>
+    </section>
+
+    <section class="slide" aria-label="Slide 6: Por qué Stellar y qué ya funciona">
+      <p class="kicker">Ejecución técnica</p>
+      <h2>Por qué Stellar y qué ya funciona</h2>
+      <div class="stellar-grid">
+        <div class="feature">
+          <strong>USDC</strong>
+          <span>respaldo real</span>
+        </div>
+        <div class="feature">
+          <strong>Un solo contrato</strong>
+          <span>escrow, reembolso en la misma transacción y reparto</span>
+        </div>
+        <div class="feature">
+          <strong>Segundos</strong>
+          <span>fees mínimos</span>
+        </div>
+        <div class="feature">
+          <strong>Verificable</strong>
+          <span>en la cadena</span>
+        </div>
+      </div>
+      <div class="badges" aria-label="Estado técnico">
+        <span class="badge">Contrato en Testnet</span>
+        <span class="badge">21 tests</span>
+        <span class="badge">Anti-sniping</span>
+        <span class="badge">Reembolso pendiente</span>
+      </div>
+      <aside class="notes" aria-label="Notas del orador">
+        <p>Stellar da lo que una planilla no da: USDC, confirmación en segundos con fees mínimos y un contrato verificable que custodia, devuelve y reparte en un solo flujo.</p>
+      </aside>
+    </section>
+
+    <section class="slide" aria-label="Slide 7: Prueba verificable en Testnet">
+      <p class="kicker">Smoke test real · subasta 3</p>
+      <h2>Prueba verificable en Testnet</h2>
+      <p class="evidence-intro">Contrato y transacciones públicas en Stellar Testnet.</p>
+      <div class="contract-row">
+        <span class="label">Contrato</span>
+        <a class="mono contract-link" target="_blank" rel="noreferrer" href="https://stellar.expert/explorer/testnet/contract/CDX6G3F5DS2NUFFXZJ5XQSFHPTG6EKXY5GONXKLFLPNW6U7SVEPZ2RLJ" title="CDX6G3F5DS2NUFFXZJ5XQSFHPTG6EKXY5GONXKLFLPNW6U7SVEPZ2RLJ">CDX6G3F5DS2NUFFXZJ5XQSFHPTG6EKXY5GONXKLFLPNW6U7SVEPZ2RLJ</a>
+      </div>
+      <div class="tx-list" aria-label="Transacciones del smoke test">
+        <a class="tx-row" target="_blank" rel="noreferrer" href="https://stellar.expert/explorer/testnet/tx/1149ae4cfa9b6af3cbdb8753a2b49c936443f4f58691bb7253bbdc74fcce3fa6" title="1149ae4cfa9b6af3cbdb8753a2b49c936443f4f58691bb7253bbdc74fcce3fa6">
+          <span class="tx-action"><code>create_auction</code></span>
+          <span class="tx-desc">creación de la subasta 3</span>
+          <span class="tx-hash">1149ae4c…ce3fa6</span>
+        </a>
+        <a class="tx-row" target="_blank" rel="noreferrer" href="https://stellar.expert/explorer/testnet/tx/d590324ba04324225b8c3141fc9b5fedf7900d30f3b3651e563d5ebe8c5ddf9c" title="d590324ba04324225b8c3141fc9b5fedf7900d30f3b3651e563d5ebe8c5ddf9c">
+          <span class="tx-action">Oferta 10 USDC</span>
+          <span class="tx-desc"><code>postor1</code></span>
+          <span class="tx-hash">d590324b…5ddf9c</span>
+        </a>
+        <a class="tx-row" target="_blank" rel="noreferrer" href="https://stellar.expert/explorer/testnet/tx/490b3cf06e07543f3524a0f9195843fac1567c545db56a062c27761e68eaef1e" title="490b3cf06e07543f3524a0f9195843fac1567c545db56a062c27761e68eaef1e">
+          <span class="tx-action">Oferta 12 USDC</span>
+          <span class="tx-desc"><code>postor2</code> · reembolsa a <code>postor1</code></span>
+          <span class="tx-hash">490b3cf0…eaef1e</span>
+        </a>
+        <a class="tx-row" target="_blank" rel="noreferrer" href="https://stellar.expert/explorer/testnet/tx/f2b18805b61449fe56fa073be19ef92315a9b3facbf21369fd65a10ce4f07ac2" title="f2b18805b61449fe56fa073be19ef92315a9b3facbf21369fd65a10ce4f07ac2">
+          <span class="tx-action"><code>settle</code></span>
+          <span class="tx-desc">9,6 artista / 2,4 espacio</span>
+          <span class="tx-hash">f2b18805…f07ac2</span>
+        </a>
+      </div>
+      <p class="evidence-foot">Los hashes visibles están abreviados; el enlace y el título contienen el hash completo.</p>
+      <aside class="notes" aria-label="Notas del orador">
+        <p>Ya está en Testnet, con veintiún tests en verde. En la subasta tres se rechazó una oferta baja, se devolvieron exactamente diez USDC de prueba al postor superado, el anti-sniping extendió el cierre y el reparto fue nueve coma seis USDC de prueba para la artista y dos coma cuatro para el espacio. Los hashes quedan en pantalla para verificarlos.</p>
+      </aside>
+    </section>
+
+    <section class="slide" aria-label="Slide 8: Qué aprendimos y qué sigue">
+      <p class="kicker">Validación y camino</p>
+      <h2>Qué aprendimos y qué sigue</h2>
+      <div class="two-col">
+        <div class="panel">
+          <h3>Validación</h3>
+          <div class="validation-placeholders">
+            <div class="placeholder">[COMPLETAR: N entrevistas]</div>
+            <div class="placeholder">[COMPLETAR: N pruebas externas]</div>
+            <div class="placeholder">[COMPLETAR: hallazgo → cambio]</div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Qué sigue</h3>
+          <ul class="next-list">
+            <li>Mainnet con USDC de Circle</li>
+            <li>Build verificable SEP-55</li>
+            <li>Onboarding con passkeys</li>
+            <li>Más muestras</li>
+          </ul>
+        </div>
+      </div>
+      <p class="closing">«La obra cuelga en la pared. La puja vive en la cadena.»</p>
+      <aside class="notes" aria-label="Notas del orador">
+        <p>Hablamos con [COMPLETAR: cantidad de artistas y espacios entrevistados] artistas y espacios de Mendoza y [COMPLETAR: cantidad que contó casos de impago] nos contaron casos de impago. Lo probamos con [COMPLETAR: cantidad de personas externas] personas de afuera: [COMPLETAR: cantidad que ofertó sola] ofertaron solas en [COMPLETAR: tiempo promedio mm:ss]. Lo que más trabó fue [COMPLETAR: hallazgo] y por eso cambiamos [COMPLETAR: cambio].</p>
+        <p>Después de la hackathon: mainnet con USDC de Circle, build verificable SEP-55, onboarding con passkeys y más muestras. Es el camino siguiente, no algo hecho.</p>
+        <p>La obra cuelga en la pared. La puja vive en la cadena.</p>
+      </aside>
+    </section>
+
+  </main>
+  <div id="notesPanel" role="complementary" aria-label="Notas del orador" aria-live="polite" hidden></div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var deck = document.getElementById('deck');
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var counter = document.getElementById('counter');
+  var notesPanel = document.getElementById('notesPanel');
+  var prevBtn = document.getElementById('prevBtn');
+  var nextBtn = document.getElementById('nextBtn');
+  var notesBtn = document.getElementById('notesBtn');
+  var fullBtn = document.getElementById('fullBtn');
+  var index = 0;
+  var notesVisible = false;
+  var touchStartX = 0;
+  var touchStartY = 0;
+  var lastSwipeAt = 0;
+
+  function clamp(value) {
+    return Math.max(0, Math.min(slides.length - 1, value));
+  }
+
+  function parseHash() {
+    var match = window.location.hash.match(/^#(\d+)$/);
+    if (!match) return null;
+    return clamp(parseInt(match[1], 10) - 1);
+  }
+
+  function fit() {
+    var width = deck.clientWidth;
+    var height = deck.clientHeight;
+    if (!width || !height) return;
+    var scale = Math.min((width - 24) / 1280, (height - 24) / 720);
+    document.documentElement.style.setProperty('--scale', Math.max(0.1, scale).toFixed(4));
+  }
+
+  function updateNotes() {
+    if (!notesVisible) {
+      notesPanel.hidden = true;
+      notesPanel.innerHTML = '';
+      return;
+    }
+    var notes = slides[index].querySelector('.notes');
+    notesPanel.innerHTML = notes ? notes.innerHTML : '';
+    notesPanel.hidden = false;
+  }
+
+  function show(target, updateHash) {
+    index = clamp(target);
+    slides.forEach(function (slide, slideIndex) {
+      var active = slideIndex === index;
+      slide.classList.toggle('active', active);
+      slide.setAttribute('aria-hidden', active ? 'false' : 'true');
+    });
+    counter.textContent = String(index + 1) + ' / ' + String(slides.length);
+    if (updateHash !== false) {
+      var hash = '#' + String(index + 1);
+      if (window.location.hash !== hash) {
+        window.history.replaceState(null, '', hash);
+      }
+    }
+    updateNotes();
+  }
+
+  function next() {
+    show(index + 1);
+  }
+
+  function prev() {
+    show(index - 1);
+  }
+
+  function toggleNotes() {
+    notesVisible = !notesVisible;
+    document.body.classList.toggle('notes-open', notesVisible);
+    notesBtn.setAttribute('aria-pressed', notesVisible ? 'true' : 'false');
+    updateNotes();
+    window.requestAnimationFrame(fit);
+  }
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen();
+      }
+    } else if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+
+  document.addEventListener('keydown', function (event) {
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+    if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ' || event.key === 'Spacebar') {
+      event.preventDefault();
+      next();
+    } else if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
+      event.preventDefault();
+      prev();
+    } else if (event.key === 'f' || event.key === 'F') {
+      event.preventDefault();
+      toggleFullscreen();
+    } else if (event.key === 'n' || event.key === 'N') {
+      event.preventDefault();
+      toggleNotes();
+    }
+  });
+
+  deck.addEventListener('click', function (event) {
+    if (event.target.closest('a, button')) return;
+    if (Date.now() - lastSwipeAt < 350) return;
+    next();
+  });
+
+  deck.addEventListener('touchstart', function (event) {
+    if (event.touches.length !== 1) return;
+    touchStartX = event.touches[0].clientX;
+    touchStartY = event.touches[0].clientY;
+  }, { passive: true });
+
+  deck.addEventListener('touchend', function (event) {
+    if (!event.changedTouches.length) return;
+    var dx = event.changedTouches[0].clientX - touchStartX;
+    var dy = event.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy)) return;
+    lastSwipeAt = Date.now();
+    if (dx < 0) next(); else prev();
+  }, { passive: true });
+
+  prevBtn.addEventListener('click', prev);
+  nextBtn.addEventListener('click', next);
+  notesBtn.addEventListener('click', toggleNotes);
+  fullBtn.addEventListener('click', toggleFullscreen);
+
+  window.addEventListener('hashchange', function () {
+    var fromHash = parseHash();
+    if (fromHash !== null && fromHash !== index) show(fromHash, false);
+  });
+
+  window.addEventListener('resize', fit);
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(fit).observe(deck);
+  }
+
+  var initial = parseHash();
+  show(initial === null ? 0 : initial, false);
+  fit();
+}());
+</script>
+</body>
+</html>
