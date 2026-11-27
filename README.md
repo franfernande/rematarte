@@ -7,6 +7,20 @@ Cada obra de la muestra tiene un QR. Lo escaneás, ves la obra, la puja actual y
 
 ---
 
+## Estado / Demo
+
+- **App:** [COMPLETAR: URL de Vercel] (todavía no hay URL pública).
+- **Red:** Stellar Testnet.
+- **Contrato de subastas:** [`CDX6G3F5DS2NUFFXZJ5XQSFHPTG6EKXY5GONXKLFLPNW6U7SVEPZ2RLJ`](https://stellar.expert/explorer/testnet/contract/CDX6G3F5DS2NUFFXZJ5XQSFHPTG6EKXY5GONXKLFLPNW6U7SVEPZ2RLJ)
+- **USDC de prueba:** asset clásico `USDC`, issuer `GDNQJIVKZNQTS4ZGH2W6VJPK4SQP4JIJR4YMWK7UHNOGQNYWN3F2BF3D`, SAC [`CA7IN3NREHPGR2UPBIJX52T4KCXVZVMOCUWC2OBK3T6JXJDSR77WAQGV`](https://stellar.expert/explorer/testnet/contract/CA7IN3NREHPGR2UPBIJX52T4KCXVZVMOCUWC2OBK3T6JXJDSR77WAQGV).
+- **Prueba en cadena:** el smoke test real de la subasta 3 verificó oferta rechazada por baja, reembolso exacto al postor superado, anti-sniping, liquidación con reparto y rechazo de una segunda liquidación.
+  - [create_auction](https://stellar.expert/explorer/testnet/tx/1149ae4cfa9b6af3cbdb8753a2b49c936443f4f58691bb7253bbdc74fcce3fa6)
+  - [oferta de postor1 por 10 USDC](https://stellar.expert/explorer/testnet/tx/d590324ba04324225b8c3141fc9b5fedf7900d30f3b3651e563d5ebe8c5ddf9c)
+  - [oferta de postor2 por 12 USDC y reembolso a postor1](https://stellar.expert/explorer/testnet/tx/490b3cf06e07543f3524a0f9195843fac1567c545db56a062c27761e68eaef1e)
+  - [settle con reparto artista/espacio](https://stellar.expert/explorer/testnet/tx/f2b18805b61449fe56fa073be19ef92315a9b3facbf21369fd65a10ce4f07ac2)
+
+---
+
 ## Contexto
 
 Proyecto para la hackathon **Sin Coordenadas | Argentina** — [bases y requisitos](https://sincoordenada-argentina.netlify.app/#reto). Organizan BAF × Stellar junto a ToraBlock y FLAT. Tres días, de la idea a algo que funciona.
@@ -30,6 +44,12 @@ RematArte convierte cada obra de una muestra en una subasta con respaldo real:
 5. **Al cerrar, el contrato liquida solo.** Paga a la artista y al espacio cultural con un reparto que quedó fijado antes de empezar. La entrega física de la obra se coordina aparte.
 
 El beneficio para la artista: **la oferta ganadora ya está paga**. Para el público: pujar es tan simple como escanear un QR y confirmar desde el celu.
+
+## Cómo funciona por dentro
+
+El contrato guarda cada subasta como un `auction_id` dentro de un solo contrato de muestra. Al ofertar, los USDC quedan depositados en escrow en el contrato; si había una oferta anterior, el reembolso se intenta en la misma transacción. Si ese reembolso no puede completarse, no bloquea la puja: queda como reembolso pendiente y la persona lo retira con `claim_refund`.
+
+Cuando llega el cierre, cualquiera puede ejecutar `settle`: el contrato reparte la oferta ganadora entre artista y espacio según el porcentaje fijado al crear la subasta, y el redondeo va a la artista. Una oferta en los últimos 300 segundos extiende el cierre a `now + 300` (anti-sniping). Las ofertas, reembolsos y liquidaciones emiten eventos `bid`, `refund` y `settled` para que la web y cualquier auditor puedan leerlos. La interfaz completa está en [`docs/plan.md`](docs/plan.md).
 
 ## Por qué Stellar
 
@@ -72,15 +92,53 @@ Una sola muestra, pocas obras, todo real en Stellar Testnet:
 ## Estructura del repo
 
 ```
-contracts/        # Contrato Soroban de la subasta (Rust)
-web/              # Frontend: fichas de obra, QR, wallet, ofertas
-docs/             # Pitch, guion de demo, notas de validación con usuarios
-AGENTS.md         # Contexto rápido para cualquier agente de código
-.devin/skills/    # Skills de Stellar (Devin)
-.devin/mcp_config.json  # MCP Stellar Raven (Devin)
-.cursor/skills/   # Mismas skills de Stellar (Cursor)
-.cursor/mcp.json  # MCP Stellar Raven (Cursor)
+contracts/auction/          # Contrato Soroban de la subasta (Rust)
+contracts/bindings/auction/ # Bindings TypeScript generados desde el WASM
+scripts/                    # Setup de USDC, deploy, smoke test, wallets demo y bindings
+web/                        # Frontend Next.js: fichas de obra, QR, wallet y ofertas
+web/data/                   # deploy.testnet.json (I3); obras.json (I2) cuando haya obras reales
+docs/                       # Plan, pitch, demo, validación, entrega y relevamiento de obras
+AGENTS.md                   # Contexto rápido para cualquier agente de código
+.devin/skills/              # Skills de Stellar (Devin)
+.devin/mcp_config.json      # MCP Stellar Raven (Devin)
+.cursor/skills/             # Mismas skills de Stellar (Cursor)
+.cursor/mcp.json            # MCP Stellar Raven (Cursor)
 ```
+
+## Cómo correrlo
+
+### Tests del contrato
+
+```bash
+cd contracts
+cargo test --lib
+```
+
+Usá `cargo test --lib`: en Windows con toolchain GNU, `cargo test` sin `--lib` falla al linkear el cdylib (`export ordinal too large`); en Linux/macOS funcionan los dos.
+
+### Deploy y scripts de Testnet
+
+```bash
+bash scripts/setup-usdc.sh
+DRY_RUN=1 bash scripts/deploy.sh
+bash scripts/deploy.sh
+bash scripts/smoke.sh
+bash scripts/demo-wallets.sh 3
+bash scripts/bindings.sh
+```
+
+Los detalles, variables opcionales y orden recomendado están en [`scripts/README.md`](scripts/README.md). No ejecutes `stellar keys secret` salvo que una persona del equipo lo haga manualmente para copiar una clave a un lugar seguro.
+
+### Web
+
+```bash
+cd web
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+La variable `USDC_DISTRIBUTOR_SECRET` se completa solo en `.env.local`/Vercel con el valor que G1 pasa por privado. Los comandos exactos y el modo de datos mock/real están en [`web/README.md`](web/README.md).
 
 ## Trabajar con agentes de código
 
@@ -105,6 +163,15 @@ Disponibles en el mismo paquete por si el alcance cambia: `agentic-payments` (x4
 - **Devin**: `devin mcp login stellar-raven`
 - **Cursor**: aceptar el servidor cuando aparece en Settings → MCP y firmar en el navegador
 - **Otro agente**: agregar `https://raven.stellar.org/mcp` como servidor HTTP y autenticar con OAuth
+
+## Documentación
+
+- [`docs/plan.md`](docs/plan.md): plan de trabajo, decisiones D1–D4 e interfaces I1–I4.
+- [`docs/validacion.md`](docs/validacion.md): notas de validación con usuarios y artistas.
+- [`docs/pitch.md`](docs/pitch.md): pitch para el jurado.
+- [`docs/demo.md`](docs/demo.md): guion de la demo.
+- [`docs/entrega.md`](docs/entrega.md): checklist de entrega en Apex.
+- [`docs/obras.md`](docs/obras.md): relevamiento y publicación de obras reales.
 
 ## Recursos
 
