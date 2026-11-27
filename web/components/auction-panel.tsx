@@ -1,6 +1,8 @@
 "use client";
 
+import { BidForm } from "@/components/bid-form";
 import { useLiveAuction, useNowSeconds } from "@/components/use-live-auction";
+import { useWallet } from "@/components/wallet-provider";
 import type { DeployConfig } from "@/lib/data";
 import { formatAgo, formatCierre, formatRemaining } from "@/lib/format";
 import {
@@ -8,7 +10,6 @@ import {
   auctionStatus,
   explorerUrl,
   formatUsdc,
-  minimumBid,
   settlementSplit,
   shortAddress,
   type Auction,
@@ -47,8 +48,10 @@ function Split({ auction }: { auction: Auction }) {
 }
 
 export function AuctionPanel({ deploy, auctionId }: { deploy: DeployConfig; auctionId: number }) {
-  const { auction, events, error } = useLiveAuction(deploy, auctionId);
+  const { auction, events, error, refresh } = useLiveAuction(deploy, auctionId);
+  const { address } = useWallet();
   const now = useNowSeconds();
+  const who = (account: string) => `${shortAddress(account)}${account === address ? " (vos)" : ""}`;
 
   if (!auction || now === undefined) {
     return (
@@ -97,7 +100,7 @@ export function AuctionPanel({ deploy, auctionId }: { deploy: DeployConfig; auct
           <p className="text-sm text-tinta-2">
             {bidder ? (
               <>
-                de <span className="font-mono">{shortAddress(bidder)}</span>
+                de <span className="font-mono">{who(bidder)}</span>
               </>
             ) : status === "open" ? (
               "Todavía no hay ofertas."
@@ -107,11 +110,6 @@ export function AuctionPanel({ deploy, auctionId }: { deploy: DeployConfig; auct
           </p>
         </div>
 
-        {status === "open" && (
-          <p className="text-lg">
-            Ofertá desde <strong className="tabular-nums">{formatUsdc(minimumBid(auction))} USDC</strong>.
-          </p>
-        )}
         {status === "open" && remaining <= ANTI_SNIPING_SECONDS && (
           <p className="border-l-2 border-ocre pl-3 text-sm text-tinta-2">
             Si alguien oferta en los últimos 5 minutos, el cierre se corre 5 minutos desde esa oferta.
@@ -137,8 +135,10 @@ export function AuctionPanel({ deploy, auctionId }: { deploy: DeployConfig; auct
             )}
           </p>
         )}
-        {status !== "settled" && <Split auction={auction} />}
       </div>
+
+      {status === "open" && <BidForm deploy={deploy} auction={auction} onFinished={refresh} />}
+      {status !== "settled" && <Split auction={auction} />}
 
       <section aria-labelledby="ofertas" className="flex flex-col gap-3 border-t border-linea pt-4">
         <h2 id="ofertas" className="font-serif text-xl">
@@ -157,7 +157,7 @@ export function AuctionPanel({ deploy, auctionId }: { deploy: DeployConfig; auct
             {rows.map(({ bid, label }) => (
               <li key={bid.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-linea py-3 last:border-b-0">
                 <span className="font-semibold tabular-nums">{formatUsdc(bid.amount)} USDC</span>
-                <span className="font-mono text-sm text-tinta-2">{shortAddress(bid.bidder)}</span>
+                <span className="font-mono text-sm text-tinta-2">{who(bid.bidder)}</span>
                 <span className="text-sm text-piedra">{formatAgo(bid.closedAt, now)}</span>
                 <span className="basis-full text-sm text-tinta-2">
                   {label}.{" "}

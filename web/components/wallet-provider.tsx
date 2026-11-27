@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { loadWalletKit } from "@/lib/wallet";
+import { loadWalletKit, WrongNetworkError } from "@/lib/wallet";
 
 type SignTransaction = (
   xdr: string,
@@ -76,6 +76,12 @@ export function WalletProvider({ networkPassphrase, children }: { networkPassphr
   const signTransaction = useCallback<SignTransaction>(
     async (xdr, opts) => {
       const { kit } = await loadWalletKit(networkPassphrase);
+      // Albedo cannot report its network (it signs for the passphrase it is given), so a failed lookup is not an error.
+      const walletNetwork = await kit.getNetwork().then(
+        (network) => network.networkPassphrase,
+        () => undefined,
+      );
+      if (walletNetwork && walletNetwork !== networkPassphrase) throw new WrongNetworkError(walletNetwork);
       return kit.signTransaction(xdr, {
         networkPassphrase,
         address: opts?.address ?? address ?? undefined,

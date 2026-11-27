@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { DeployConfig } from "@/lib/data";
 import {
   getAuction,
@@ -13,7 +13,8 @@ const EVENTS_POLL_MS = 4_000;
 const AUCTION_REFRESH_EVERY_POLLS = 8;
 const LIST_POLL_MS = 15_000;
 
-type LiveAuction = { auction?: Auction; events?: AuctionEvent[]; error?: string };
+type LiveAuctionState = { auction?: Auction; events?: AuctionEvent[]; error?: string };
+type LiveAuction = LiveAuctionState & { refresh: () => void };
 
 function errorText(error: unknown): string {
   return error instanceof Error ? error.message : "No se pudo leer la subasta.";
@@ -21,13 +22,16 @@ function errorText(error: unknown): string {
 
 // New contract events trigger a re-read of the auction, so a bid (and its anti-sniping extension) shows up within one poll.
 export function useLiveAuction(deploy: DeployConfig, auctionId: number): LiveAuction {
-  const [state, setState] = useState<LiveAuction>({});
+  const [state, setState] = useState<LiveAuctionState>({});
+  const refreshRef = useRef<() => void>(() => {});
+  const refresh = useCallback(() => refreshRef.current(), []);
 
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let cursor: string | undefined;
     let polls = 0;
+    let inFlight = false;
 
     const refreshAuction = async () => {
       try {
@@ -38,34 +42,45 @@ export function useLiveAuction(deploy: DeployConfig, auctionId: number): LiveAuc
       }
     };
 
+    // A poll already in flight schedules the next one, so an early refresh() never starts a second loop.
     const poll = async () => {
+      clearTimeout(timer);
+      if (inFlight) return;
+      inFlight = true;
       if (!document.hidden) {
         polls += 1;
         try {
           const firstLoad = cursor === undefined;
           const page = await getAuctionEvents(deploy, auctionId, cursor);
           cursor = page.cursor;
-          if (cancelled) return;
-          setState((current) => ({ ...current, events: mergeAuctionEvents(current.events ?? [], page.events) }));
-          if (!firstLoad && (page.events.length > 0 || polls % AUCTION_REFRESH_EVERY_POLLS === 0)) {
-            await refreshAuction();
+          if (!cancelled) {
+            setState((current) => ({ ...current, events: mergeAuctionEvents(current.events ?? [], page.events) }));
+            if (!firstLoad && (page.events.length > 0 || polls % AUCTION_REFRESH_EVERY_POLLS === 0)) {
+              await refreshAuction();
+            }
           }
         } catch {
           // Transient RPC errors keep the last known state; the next poll retries.
         }
       }
+      inFlight = false;
       if (!cancelled) timer = setTimeout(poll, EVENTS_POLL_MS);
     };
 
+    refreshRef.current = () => {
+      void refreshAuction();
+      void poll();
+    };
     void refreshAuction();
     void poll();
     return () => {
       cancelled = true;
       clearTimeout(timer);
+      refreshRef.current = () => {};
     };
   }, [deploy, auctionId]);
 
-  return state;
+  return { ...state, refresh };
 }
 
 export function useLiveAuctions(deploy: DeployConfig): Record<string, Auction> | undefined {
