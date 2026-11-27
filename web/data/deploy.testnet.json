@@ -1,0 +1,16 @@
+{
+  "network": "testnet",
+  "rpcUrl": "https://soroban-testnet.stellar.org",
+  "networkPassphrase": "Test SDF Network ; September 2015",
+  "auctionContractId": "CDX6G3F5DS2NUFFXZJ5XQSFHPTG6EKXY5GONXKLFLPNW6U7SVEPZ2RLJ",
+  "usdc": {
+    "code": "USDC",
+    "issuer": "GDNQJIVKZNQTS4ZGH2W6VJPK4SQP4JIJR4YMWK7UHNOGQNYWN3F2BF3D",
+    "sacId": "CA7IN3NREHPGR2UPBIJX52T4KCXVZVMOCUWC2OBK3T6JXJDSR77WAQGV"
+  },
+  "subastas": {
+    "atardecer-en-uspallata": 0,
+    "vinedos-al-sur": 1,
+    "cerro-en-calma": 2
+  }
+}

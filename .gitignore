@@ -21,3 +21,7 @@ target/
 Thumbs.db
 .vscode/
 .idea/
+
+# Stellar CLI (identidades locales) y snapshots de tests Soroban
+.stellar/
+test_snapshots/

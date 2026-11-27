@@ -25,3 +25,11 @@ Leé primero `README.md`: problema, idea, alcance del MVP y requisitos de entreg
   `.devin/mcp_config.json` y `.cursor/mcp.json`; requiere OAuth una vez.
 - **Nunca** hardcodear secret keys ni commitear `.env`. Testnet usa Friendbot.
 - Español en UI y pitch; código y commits en inglés/español consistente con el repo.
+
+## Comandos (G1 — contrato y Testnet)
+
+- Tests del contrato: `cd contracts && cargo test --lib` (en Windows GNU el `cargo test` completo falla al linkear el `cdylib`: `export ordinal too large`).
+- Build WASM: `cd contracts && stellar contract build`.
+- USDC de prueba + identidades Testnet: `bash scripts/setup-usdc.sh` (idempotente).
+- Deploy: `bash scripts/deploy.sh` → escribe `web/data/deploy.testnet.json` (solo IDs públicos). `DRY_RUN=1` para ver comandos; `CIERRE_MINUTOS=N` para cierres de prueba.
+- Prueba end-to-end en Testnet: `bash scripts/smoke.sh`. Wallets de demo: `bash scripts/demo-wallets.sh 3`. Bindings TS: `bash scripts/bindings.sh`.
