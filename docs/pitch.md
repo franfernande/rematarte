@@ -46,7 +46,7 @@
 
 > Cada obra tiene su QR: lo escaneás y entrás a la ficha sin instalar nada. Ahí se ve la obra, cuánto falta y desde qué monto se puede ofertar. La primera persona oferta desde su wallet: ofertar no es prometer, es depositar. Otra persona la supera, y el punto clave es que si te superan no tenés que pedir nada: tu plata vuelve en la misma transacción. Mientras esta subasta sigue abierta, mostramos otra subasta preparada antes, ya cerrada pero sin liquidar: cualquiera puede liquidarla. Al liquidar, el contrato reparte con el porcentaje fijado, y en la cadena se verifica cuánto cobró la artista y cuánto cobró el espacio.
 
-**Condición para presentarla así:** la web pública, el onboarding y los QR tienen que estar terminados. Recorrido final: ver `docs/demo.md`. `[COMPLETAR: URL pública de la demo y QR final cuando existan]`.
+**Condición para presentarla así:** la web pública, el onboarding y los QR tienen que estar terminados. Recorrido final: ver `docs/demo.md`. https://artemi-arte.vercel.app (los QR se imprimen desde `/qr`).
 
 **Respaldo:** wallets `demo1..demo3` con 500 USDC de prueba cada una. Si se graba video de respaldo, agregarlo acá: `[COMPLETAR: link al video de respaldo cuando exista]`.
 
@@ -185,7 +185,7 @@ En el contrato actual no hay una función para que el admin retire fondos de una
 
 - `[COMPLETAR: dato de docs/validacion.md — cifra, testimonio o caso concreto de impago en remates informales]`
 - `[COMPLETAR: nombre de artistas, talleres o espacios reales solo si el equipo tiene permiso para mencionarlos]`
-- `[COMPLETAR: URL pública de la demo y QR final cuando existan]`
+- https://artemi-arte.vercel.app (los QR se imprimen desde `/qr`)
 - `[COMPLETAR: link al video de respaldo cuando exista]`
 - `[COMPLETAR: cantidad de artistas y espacios entrevistados]`
 - `[COMPLETAR: cantidad que contó casos de impago]`

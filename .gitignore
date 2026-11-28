@@ -25,3 +25,6 @@ Thumbs.db
 # Stellar CLI (identidades locales) y snapshots de tests Soroban
 .stellar/
 test_snapshots/
+
+# Vercel (enlace local de la CLI)
+.vercel

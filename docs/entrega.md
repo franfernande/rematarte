@@ -9,7 +9,7 @@ No conocemos los campos exactos del formulario de Apex. No los inventamos: `[COM
 | Ítem | Estado / valor | Responsable | Hora objetivo |
 |---|---|---|---|
 | Repo | https://github.com/franfernande/artemi | [COMPLETAR: responsable] | 22:30 |
-| URL de la app | `[COMPLETAR: URL de Vercel]` | [COMPLETAR: responsable] | 22:30 |
+| URL de la app | https://artemi-arte.vercel.app | [COMPLETAR: responsable] | 22:30 |
 | Contract ID | `CDX6G3F5DS2NUFFXZJ5XQSFHPTG6EKXY5GONXKLFLPNW6U7SVEPZ2RLJ` | [COMPLETAR: responsable] | 22:30 |
 | Video | `[COMPLETAR: link al video]` | [COMPLETAR: responsable] | 22:30 |
 | Notas de validación | `[COMPLETAR: link o archivo final de validación]` | [COMPLETAR: responsable] | 22:30 |
@@ -41,7 +41,6 @@ Artemi resuelve un problema concreto de artistas, talleres y espacios culturales
 
 ## Notas para completar a mano
 
-- `[COMPLETAR: URL de Vercel]`
 - `[COMPLETAR: link al video]`
 - `[COMPLETAR: link o archivo final de validación]`
 - `[COMPLETAR: link a pitch o slides]`

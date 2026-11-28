@@ -9,7 +9,7 @@ Cada obra de la muestra tiene un QR. Lo escaneás, ves la obra, la puja actual y
 
 ## Estado / Demo
 
-- **App:** [COMPLETAR: URL de Vercel] (todavía no hay URL pública).
+- **App:** https://artemi-arte.vercel.app
 - **Red:** Stellar Testnet.
 - **Contrato de subastas:** [`CDX6G3F5DS2NUFFXZJ5XQSFHPTG6EKXY5GONXKLFLPNW6U7SVEPZ2RLJ`](https://stellar.expert/explorer/testnet/contract/CDX6G3F5DS2NUFFXZJ5XQSFHPTG6EKXY5GONXKLFLPNW6U7SVEPZ2RLJ)
 - **USDC de prueba:** asset clásico `USDC`, issuer `GDNQJIVKZNQTS4ZGH2W6VJPK4SQP4JIJR4YMWK7UHNOGQNYWN3F2BF3D`, SAC [`CA7IN3NREHPGR2UPBIJX52T4KCXVZVMOCUWC2OBK3T6JXJDSR77WAQGV`](https://stellar.expert/explorer/testnet/contract/CA7IN3NREHPGR2UPBIJX52T4KCXVZVMOCUWC2OBK3T6JXJDSR77WAQGV).
