@@ -54,6 +54,14 @@ function writeContactSession(address: string) {
 const NOMBRE = /^[\p{L}\p{M}' .-]{2,60}$/u;
 const emptyContact: ContactFields = { nombre: "", apellido: "", telefono: "" };
 
+const CONTACT_UNAVAILABLE =
+  "El registro de contactos no está disponible ahora. Tu oferta sigue igual; si ganás, el espacio coordina la entrega con vos en la sala.";
+
+function contactRegistryDown(cause: unknown): boolean {
+  // Server or storage failure (5xx) or no connection: not the bidder's fault, so it must not block the bid.
+  return (cause instanceof ContactoApiError && cause.status >= 500) || cause instanceof TypeError;
+}
+
 function telefonoPareceValido(value: string): boolean {
   if (!/^\+?[\d\s().-]+$/.test(value.trim())) return false;
   const digits = value.replace(/\D/g, "");
@@ -71,6 +79,7 @@ export function BidForm({ auction, titulo, onRefresh }: { auction: AuctionState;
   const [contactStep, setContactStep] = useState<ContactStep | null>(null);
   const [contact, setContact] = useState<ContactFields>(emptyContact);
   const [contactError, setContactError] = useState<string | null>(null);
+  const [contactNotice, setContactNotice] = useState<string | null>(null);
 
   const input = inputOverride ?? stroopsToInput(minimum);
   const amount = parseUsdc(input);
@@ -141,18 +150,16 @@ export function BidForm({ auction, titulo, onRefresh }: { auction: AuctionState;
     void refreshBalance(bidder);
   }
 
+  // The contact form is optional: if the registry fails, the bid goes on and a notice is shown.
   async function contactIsMissing(bidder: string): Promise<boolean> {
     if (readContactSession(bidder)) return false;
     try {
       const registered = await contactoEstaRegistrado(bidder);
       if (registered) writeContactSession(bidder);
       return !registered;
-    } catch (cause) {
-      throw new Error(
-        cause instanceof ContactoApiError && cause.status === 503
-          ? cause.message
-          : "No pudimos revisar tus datos de contacto. Revisá tu conexión y probá de nuevo.",
-      );
+    } catch {
+      setContactNotice(CONTACT_UNAVAILABLE);
+      return false;
     }
   }
 
@@ -214,6 +221,12 @@ export function BidForm({ auction, titulo, onRefresh }: { auction: AuctionState;
       await guardarContacto({ address: contactStep.address, nombre, apellido, telefono }, signTransaction);
       writeContactSession(contactStep.address);
     } catch (cause) {
+      if (contactRegistryDown(cause)) {
+        setContactNotice(CONTACT_UNAVAILABLE);
+        writeContactSession(contactStep.address);
+        await bidPending(contactStep);
+        return;
+      }
       setContactError(
         cause instanceof ContactoApiError
           ? cause.message
@@ -223,8 +236,13 @@ export function BidForm({ auction, titulo, onRefresh }: { auction: AuctionState;
       return;
     }
 
-    const pending = contactStep;
+    await bidPending(contactStep);
+  }
+
+  async function bidPending(pending: ContactStep) {
+    setBusy(true);
     setContactStep(null);
+    setContactError(null);
     setTransaction({ state: "working", message: "Preparando tu oferta…" });
     try {
       await executeBid(pending.address, pending.amount);
@@ -233,6 +251,18 @@ export function BidForm({ auction, titulo, onRefresh }: { auction: AuctionState;
     } finally {
       setBusy(false);
     }
+  }
+
+  async function skipContactAndBid() {
+    if (busy || !contactStep) return;
+    if (contactStep.amount < minimum) {
+      setContactStep(null);
+      setTransaction({ state: "error", message: `La oferta mínima cambió. Ahora es ${formatUsdc(minimum)} USDC.` });
+      return;
+    }
+    // Do not ask again in this session.
+    writeContactSession(contactStep.address);
+    await bidPending(contactStep);
   }
 
   const validAmount = amount ?? minimum;
@@ -315,6 +345,9 @@ export function BidForm({ auction, titulo, onRefresh }: { auction: AuctionState;
         <T>{address && balance !== undefined && balance !== null && !insufficientBalance && (
           <p className="text-xs text-piedra"><T>Tenés</T> {formatUsdc(balance)} <T>USDC de prueba disponibles.</T></p>
         )}</T>
+        <T>{contactNotice && (
+          <p role="status" className="rounded-sm border border-ocre/40 bg-ocre/10 px-3 py-2 text-xs text-tinta-2"><T>{contactNotice}</T></p>
+        )}</T>
       </div>
 
       {contactStep && (
@@ -334,6 +367,16 @@ export function BidForm({ auction, titulo, onRefresh }: { auction: AuctionState;
       >
         <T>{buttonText}</T>
       </button>
+      {contactStep && (
+        <button
+          type="button"
+          onClick={() => void skipContactAndBid()}
+          disabled={busy || !amountIsValid}
+          className="mt-2 min-h-11 w-full rounded-full px-6 text-sm font-medium text-tinta-2 underline decoration-tinta/30 underline-offset-4 transition-colors hover:text-malbec disabled:opacity-50"
+        >
+          <T>Ofertar sin dejar mis datos</T>
+        </button>
+      )}
 
       {showTransaction && (
         <div className="mt-3">
