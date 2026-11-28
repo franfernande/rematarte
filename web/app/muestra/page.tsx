@@ -47,7 +47,7 @@ function PortadaFallback() {
         <div className="sala-lamina animate-pulse bg-cal-2" />
         <div className="space-y-5" aria-hidden="true">
           <div className="h-4 w-36 bg-linea" />
-          <div className="h-20 max-w-80 bg-cal-2" />
+          <div className="h-20 max-w-80 rounded-lg bg-cal-2" />
           <div className="h-4 max-w-64 bg-linea" />
         </div>
       </div>

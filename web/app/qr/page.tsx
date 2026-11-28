@@ -86,9 +86,9 @@ function QrCardsFallback() {
     <TranslatedAttributes><div className="qr-list grid gap-6" aria-label="Preparando cartelas">
       {[0, 1, 2].map((item) => (
         <div key={item} className="cartela h-72 animate-pulse p-6">
-          <div className="h-4 w-32 rounded bg-linea" />
-          <div className="mt-6 h-9 w-2/3 rounded bg-linea" />
-          <div className="mt-4 h-4 w-1/2 rounded bg-linea" />
+          <div className="h-4 w-32 rounded-md bg-linea" />
+          <div className="mt-6 h-9 w-2/3 rounded-md bg-linea" />
+          <div className="mt-4 h-4 w-1/2 rounded-md bg-linea" />
         </div>
       ))}
     </div></TranslatedAttributes>

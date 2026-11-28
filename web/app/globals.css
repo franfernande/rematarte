@@ -15,6 +15,16 @@
   --color-noche: #141210;
   --color-exito: #435a4d;
 
+  /* Bordes suaves y fluidos: crecen un poco con el viewport (mobile → escritorio). */
+  --radius-xs: 0.25rem;
+  --radius-sm: clamp(0.4rem, 0.34rem + 0.25vw, 0.55rem);
+  --radius-md: clamp(0.55rem, 0.46rem + 0.35vw, 0.75rem);
+  --radius-lg: clamp(0.7rem, 0.56rem + 0.55vw, 1rem);
+  --radius-xl: clamp(0.85rem, 0.66rem + 0.75vw, 1.25rem);
+  --radius-2xl: clamp(1rem, 0.76rem + 1vw, 1.6rem);
+  --radius-3xl: clamp(1.25rem, 0.95rem + 1.2vw, 2rem);
+  --radius-4xl: clamp(1.5rem, 1.1rem + 1.6vw, 2.5rem);
+
   --font-serif: var(--font-eb-garamond), Georgia, serif;
   --font-sans: var(--font-public-sans), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
@@ -52,7 +62,20 @@
     outline: 2px solid var(--color-malbec);
     outline-offset: 3px;
   }
+  /* Controles de formulario y botones con esquinas suaves por defecto. */
+  input:where(:not([type="checkbox"], [type="radio"], [type="range"])),
+  select,
+  textarea,
+  button,
+  summary,
+  dialog,
+  img,
+  video,
+  iframe {
+    border-radius: var(--radius-sm);
+  }
 }
+
 
 @layer components {
   /* Etiqueta en versalitas espaciadas, como las cartelas de museo. */
@@ -69,9 +92,10 @@
     background: var(--color-papel);
     border: 1px solid var(--color-linea);
     box-shadow: 0 3px 12px rgb(41 39 34 / 0.04);
+    border-radius: var(--radius-xl);
   }
-  .marco { background: var(--color-cal-2); padding: clamp(.65rem, 2vw, 1.8rem); }
-  .paspartu { background: var(--color-cal-2); }
+  .marco { background: var(--color-cal-2); padding: clamp(.65rem, 2vw, 1.8rem); border-radius: var(--radius-xl); }
+  .paspartu { background: var(--color-cal-2); border-radius: var(--radius-lg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -102,7 +126,7 @@
   .sala-portada { background: #efede4; border-bottom: 1px solid var(--color-linea); }
   .sala-pared { display: grid; align-items: center; gap: clamp(1.4rem, 5vw, 6rem); padding-block: clamp(1.5rem, 4vw, 4.5rem); }
   .sala-pieza { min-width: 0; }
-  .sala-lamina { position: relative; display: block; height: clamp(15rem, 47svh, 32rem); }
+  .sala-lamina { position: relative; display: block; height: clamp(15rem, 47svh, 32rem); border-radius: var(--radius-xl); overflow: clip; }
   .pie-lamina { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .4rem; margin: 1.25rem auto 0; padding-top: .65rem; border-top: 1px solid var(--color-linea); color: var(--color-tinta-2); font-size: .75rem; }
   .sala-cartela { min-width: 0; }
   .sala-folio { display: flex; align-items: center; gap: .7rem; color: var(--color-malbec); font-size: .875rem; }
@@ -111,14 +135,14 @@
   .sala-descripcion { max-width: 35ch; color: var(--color-tinta-2); font: 400 clamp(1.24rem, 1.65vw, 1.65rem)/1.34 var(--font-serif); }
   .sala-enlaces { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem 1.4rem; margin-top: 1.5rem; }
   .sala-boton, .sala-texto { display: inline-flex; align-items: center; min-height: 2.75rem; font-size: .9rem; font-weight: 600; }
-  .sala-boton { justify-content: space-between; gap: 1.25rem; padding: .7rem 1.15rem; background: var(--color-malbec); color: var(--color-papel); border-radius: .2rem; }
+  .sala-boton { justify-content: space-between; gap: 1.25rem; padding: .7rem 1.15rem; background: var(--color-malbec); color: var(--color-papel); border-radius: var(--radius-md); }
   .sala-boton:hover { background: var(--color-malbec-2); }
   .sala-texto { color: var(--color-malbec); text-decoration: underline; text-underline-offset: .3em; }
   .sala-puja { max-width: 31rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--color-linea); }
   .sala-galeria { display: grid; margin-top: 2.25rem; gap: 3rem; }
-  .sala-miniatura { position: relative; height: clamp(16rem, 76vw, 29rem); background: var(--color-cal-2); border: .9rem solid var(--color-cal-2); }
-  .panel-sala { padding: clamp(1.5rem, 4vw, 3.5rem); border-top: 2px solid var(--color-malbec); }
-  .demo-note { color: var(--color-exito); border-left: 2px solid currentColor; padding-left: .75rem; margin-block: .75rem; font-size: .88rem; font-weight: 600; }
+  .sala-miniatura { position: relative; height: clamp(16rem, 76vw, 29rem); background: var(--color-cal-2); border: .9rem solid var(--color-cal-2); border-radius: var(--radius-xl); overflow: clip; }
+  .panel-sala { padding: clamp(1.5rem, 4vw, 3.5rem); border-top: 2px solid var(--color-malbec); border-radius: var(--radius-2xl); }
+  .demo-note { color: var(--color-exito); border-left: 2px solid currentColor; padding-left: .75rem; margin-block: .75rem; font-size: .88rem; font-weight: 600; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
   @media (min-width: 48rem) {
     .sala-pared { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); }
     .sala-lamina { height: clamp(24rem, 61svh, 43rem); }
@@ -201,6 +225,8 @@
     position: relative;
     aspect-ratio: 4 / 5;
     background: var(--color-cal-2);
+    border-radius: var(--radius-xl);
+    overflow: clip;
   }
   .obra-lienzo img { padding: .45rem; }
   .obra-resumen {
@@ -280,6 +306,7 @@
   .vinedo-paisaje { z-index: -2; }
   .portada-vinedo .pie-lamina {
     background: #f3efe5;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
     padding: .65rem .75rem;
     margin-top: 0;
   }

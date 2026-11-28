@@ -7,7 +7,7 @@ type UpcomingWork = NonNullable<Artista["proximas"]>[number];
 export function UpcomingWorkCard({ obra, artista }: { obra: UpcomingWork; artista: string }) {
   return (
     <figure data-entrada>
-      <div className="relative aspect-[4/3] bg-cal-2">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-cal-2">
         <TranslatedAttributes>
           <Image src={obra.imagen} alt={obra.alt} fill sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 30vw" className="object-contain" />
         </TranslatedAttributes>

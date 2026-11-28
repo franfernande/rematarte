@@ -15,7 +15,7 @@ const inputClass =
 
 export function ContactForm({ id, values, error, disabled = false, onChange }: ContactFormProps) {
   return (
-    <section aria-labelledby={`${id}-titulo`} className="mt-4 animate-aparecer border-l-2 border-exito bg-cal px-4 py-5">
+    <section aria-labelledby={`${id}-titulo`} className="mt-4 animate-aparecer border-l-2 border-exito bg-cal px-4 py-5 rounded-r-lg">
       <p className="etiqueta !text-exito"><T>Antes de tu primera oferta</T></p>
       <h3 id={`${id}-titulo`} className="mt-2 font-serif text-2xl leading-tight text-tinta">
         <T>¿Cómo te contactamos si ganás?</T>

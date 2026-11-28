@@ -39,7 +39,7 @@ export function ArtistCard({ artista, index = 0 }: { artista: ArtistaConObras; i
               <li key={obra.slug}>
                 <Link
                   href={`/obra/${obra.slug}`}
-                  className="group relative block aspect-[4/3] overflow-hidden bg-cal-2 transition-colors hover:bg-linea"
+                  className="group relative block aspect-[4/3] overflow-hidden rounded-lg bg-cal-2 transition-colors hover:bg-linea"
                 >
                   <TranslatedAttributes><Image
                     src={obra.imagen}

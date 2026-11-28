@@ -275,7 +275,7 @@ export function LoginDialog({
         aria-busy={busy}
         aria-labelledby="login-dialog-title"
         tabIndex={-1}
-        className="cartela animate-aparecer relative z-10 max-h-[calc(100dvh_-_1.5rem_-_env(safe-area-inset-bottom)_-_env(safe-area-inset-top))] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-3xl border-linea bg-papel p-5 pb-[calc(1.25rem_+_env(safe-area-inset-bottom))] shadow-2xl sm:max-h-[calc(100dvh_-_3rem_-_env(safe-area-inset-bottom)_-_env(safe-area-inset-top))] sm:rounded-lg sm:p-6 sm:pb-6"
+        className="cartela animate-aparecer relative z-10 max-h-[calc(100dvh_-_1.5rem_-_env(safe-area-inset-bottom)_-_env(safe-area-inset-top))] w-full max-w-md overflow-y-auto overscroll-contain rounded-3xl border-linea bg-papel p-5 pb-[calc(1.25rem_+_env(safe-area-inset-bottom))] shadow-2xl sm:max-h-[calc(100dvh_-_3rem_-_env(safe-area-inset-bottom)_-_env(safe-area-inset-top))] sm:rounded-lg sm:p-6 sm:pb-6"
       >
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-linea sm:hidden" aria-hidden />
         <div className="flex items-start justify-between gap-4">

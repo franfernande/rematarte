@@ -37,7 +37,7 @@ function FichaSkeleton() {
       <div className="etiqueta min-h-11"><T>La muestra</T></div>
       <div className="obra-disposicion">
         <div className="obra-imagen obra-lienzo animate-pulse bg-cal-2" />
-        <div className="obra-encabezado h-24 animate-pulse bg-cal-2" />
+        <div className="obra-encabezado h-24 animate-pulse rounded-lg bg-cal-2" />
         <div className="obra-puja cartela h-80 animate-pulse" />
       </div>
     </div>

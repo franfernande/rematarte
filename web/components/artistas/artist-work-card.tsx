@@ -8,7 +8,7 @@ export function ArtistWorkCard({ obra, auctionId }: { obra: Obra; auctionId?: nu
   return (
     <article className="h-full">
       <Link href={`/obra/${obra.slug}`} className="group block">
-        <div className="relative aspect-[4/3] overflow-hidden bg-cal-2">
+        <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-cal-2">
           <TranslatedAttributes><Image
             src={obra.imagen}
             alt={`${obra.titulo}, de ${obra.artista}`}
