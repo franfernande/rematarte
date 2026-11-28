@@ -1,0 +1,69 @@
+[
+  {
+    "slug": "fernando-fader",
+    "nombre": "Fernando Fader",
+    "bio": "Fader creció en Mendoza. En 1904 volvió a la provincia después de estudiar pintura en Múnich y al año siguiente fundó una academia. Esta sala reúne tres maneras de mirar lo cotidiano en su pintura.",
+    "origen": "Burdeos, 1882 — Loza Corral, 1935",
+    "imagen": "/muestra/fader/fernando-fader.webp",
+    "fuenteRetrato": "https://commons.wikimedia.org/wiki/File:Fernando_fader_portrait.JPG",
+    "creditoRetrato": "Fotografía de autor desconocido, hacia 1910. Wikimedia Commons."
+  },
+  {
+    "slug": "fidel-roig-matons",
+    "nombre": "Fidel Roig Matóns",
+    "disciplina": "Pintura y música",
+    "origen": "Guanacache, Mendoza",
+    "bio": "En sus pinturas de Guanacache, Roig Matóns dejó un testimonio de la vida de las comunidades laguneras. También fue músico y participó en la fundación de la Sociedad Orquestal de Mendoza.",
+    "referencia": "https://www.mendoza.gov.ar/prensa/conversatorio-roig-x-roig/",
+    "imagen": "/muestra/roig/autorretrato.webp",
+    "fuenteRetrato": "https://fidelroigmatons.blogspot.com/",
+    "creditoRetrato": "Autorretrato al óleo, 1931. Archivo de la familia Roig.",
+    "proximas": [
+      {
+        "titulo": "Mi esposa",
+        "imagen": "/muestra/roig/mi-esposa.webp",
+        "alt": "María Elisabet Simon de Roig, de pie con un vestido oscuro.",
+        "ficha": "Óleo · 1931",
+        "credito": "Pinacoteca Sanmartiniana · familia Roig",
+        "fuente": "https://fidelroigmatons.blogspot.com/"
+      },
+      {
+        "titulo": "Puente histórico. Puente de Picheuta",
+        "imagen": "/muestra/roig/puente-de-picheuta.webp",
+        "alt": "El puente de Picheuta en el paso de Uspallata.",
+        "ficha": "Óleo sobre terciada · 100 × 77 cm",
+        "credito": "Pinacoteca Sanmartiniana · familia Roig",
+        "fuente": "https://fidelroigmatons.blogspot.com/"
+      }
+    ]
+  },
+  {
+    "slug": "roberto-azzoni",
+    "nombre": "Roberto Azzoni",
+    "disciplina": "Pintura y dibujo",
+    "origen": "Mendoza, Argentina",
+    "bio": "Azzoni creció en Mendoza, donde presentó su primera exposición individual en 1926. Enseñó pintura y dibujo en la Universidad Nacional de Cuyo y realizó un mural en la misma escuela.",
+    "referencia": "https://www.mendoza.gov.ar/prensa/inaugura-la-muestra-ellas-de-la-coleccion-de-la-familia-de-roberto-azzoni/",
+    "imagen": "/muestra/azzoni/retrato.webp",
+    "fuenteRetrato": "https://fcm.uncuyo.edu.ar/mural-azzoni",
+    "creditoRetrato": "Fotografía de Roberto Azzoni. Facultad de Ciencias Médicas, UNCuyo.",
+    "proximas": [
+      {
+        "titulo": "Mujeres trabajando en la viña",
+        "imagen": "/muestra/azzoni/mujeres-en-la-vina.webp",
+        "alt": "Dos trabajadoras de la viña junto a sus canastos.",
+        "ficha": "Óleo · 1948",
+        "credito": "Patrimonio Artístico de la Secretaría de Agricultura",
+        "fuente": "https://www.magyp.gob.ar/sitio/areas/patrimonio/patrimonio/biografias/index.php"
+      },
+      {
+        "titulo": "Suburbio",
+        "imagen": "/muestra/azzoni/suburbio.webp",
+        "alt": "Una calle de tierra entre casas bajas y árboles.",
+        "ficha": "Óleo sobre tela",
+        "credito": "Museo Virtual de Godoy Cruz",
+        "fuente": "https://museovirtual.godoycruz.gob.ar/fichas-pinacoteca/"
+      }
+    ]
+  }
+]

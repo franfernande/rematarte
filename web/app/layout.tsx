@@ -1,15 +1,21 @@
+import { T, TranslatedAttributes } from "@/components/language-switch";
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import { EB_Garamond, Geist_Mono, Public_Sans } from "next/font/google";
 import Link from "next/link";
+import { AcequiasDeFondo } from "@/components/brand/acequia";
+import { Logo } from "@/components/brand/logo";
 import { ConnectWalletButton } from "@/components/connect-wallet-button";
+import { LanguageSwitch } from "@/components/language-switch";
+import { NavLinks } from "@/components/nav-links";
 import { WalletProvider } from "@/components/wallet-provider";
 import { getDeploy } from "@/lib/data";
 import { accountUrl } from "@/lib/format";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const publicSans = Public_Sans({
+  variable: "--font-public-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -17,17 +23,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument-serif",
+const ebGaramond = EB_Garamond({
+  variable: "--font-eb-garamond",
   subsets: ["latin"],
-  weight: "400",
+  weight: ["400", "500", "600"],
   style: ["normal", "italic"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "RematArte · Subastas de arte en vivo",
-    template: "%s · RematArte",
+    default: "Artemi · Subastas de arte en vivo",
+    template: "%s · Artemi",
   },
   description: "Subastas de arte en vivo con USDC en Stellar. Escaneá el QR de la obra y ofertá desde el celu.",
 };
@@ -35,7 +42,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#f2ede4",
+  themeColor: "#f5f2ea",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -44,50 +51,55 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
+      className={`${publicSans.variable} ${geistMono.variable} ${ebGaramond.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col text-tinta">
+      <body className="isolate flex min-h-full flex-col text-tinta">
+        <a
+          href="#contenido"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:inline-flex focus:min-h-11 focus:items-center focus:rounded-full focus:bg-malbec focus:px-5 focus:font-medium focus:text-cal"
+        >
+          <T>Saltar al contenido</T>
+        </a>
         <WalletProvider networkPassphrase={networkPassphrase}>
-          <header className="sticky top-0 z-30 border-b border-linea/80 bg-cal/85 backdrop-blur-md">
-            <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-5">
-              <Link href="/" className="font-serif text-[1.65rem] leading-none tracking-tight" aria-label="RematArte, inicio">
-                Remat<em className="text-malbec">Arte</em>
-              </Link>
-              <nav className="flex items-center gap-1 sm:gap-3">
-                <Link
-                  href="/#muestra"
-                  className="hidden rounded-full px-3 py-2 text-sm text-tinta-2 transition-colors hover:text-tinta sm:inline-block"
-                >
-                  La muestra
-                </Link>
-                <Link
-                  href="/empezar"
-                  className="hidden rounded-full px-3 py-2 text-sm text-tinta-2 transition-colors hover:text-tinta sm:inline-block"
-                >
-                  Empezar
-                </Link>
+          <header className="sticky top-0 z-30 border-b border-linea bg-cal/95 backdrop-blur-md">
+            <div className="contenedor flex flex-wrap items-center justify-between gap-x-2 py-1.5 md:h-16 md:flex-nowrap md:gap-3 md:py-0">
+              <TranslatedAttributes><Link
+                href="/"
+                className="order-1 inline-flex items-center [&>img]:h-7 [&>img]:w-auto sm:[&>img]:h-9 lg:[&>img]:h-10"
+                aria-label="Artemi, inicio"
+              >
+                <Logo />
+              </Link></TranslatedAttributes>
+              <div className="order-2 md:order-3">
                 <ConnectWalletButton />
+              </div>
+              <nav className="order-3 flex min-h-11 w-full items-center gap-0.5 min-[400px]:gap-2 md:order-2 md:w-auto lg:gap-3">
+                <NavLinks />
+                <LanguageSwitch />
               </nav>
             </div>
           </header>
-          <main className="flex flex-1 flex-col">{children}</main>
+          <main id="contenido" tabIndex={-1} className="flex flex-1 flex-col">
+            <AcequiasDeFondo />
+            {children}
+          </main>
           <footer className="mt-24 border-t border-linea">
-            <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-10 text-sm text-tinta-2 sm:flex-row sm:items-end sm:justify-between">
+            <div className="contenedor flex flex-col gap-6 py-10 text-sm text-tinta-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="font-serif text-2xl text-tinta">
-                  La obra cuelga en la pared. <em className="text-malbec">La puja vive en la cadena.</em>
+                <p className="font-serif text-[1.65rem] text-tinta">
+                  Artemi <span className="text-malbec">/</span> Mendoza
                 </p>
-                <p className="mt-2 text-piedra">Sin Coordenadas | Argentina · Eje I Arte · Mendoza</p>
+                <p className="mt-2 text-piedra"><T>Arte en Mendoza · Sin Coordenadas, Argentina</T></p>
               </div>
               <div className="flex flex-col gap-1 sm:items-end">
-                <span className="etiqueta">Stellar Testnet · USDC de prueba</span>
+                <span className="etiqueta"><T>Stellar Testnet · USDC de prueba</T></span>
                 <a
                   href={accountUrl(auctionContractId)}
                   target="_blank"
                   rel="noreferrer"
                   className="font-mono text-xs text-malbec underline decoration-malbec/30 underline-offset-4 hover:decoration-malbec"
                 >
-                  Contrato {auctionContractId.slice(0, 6)}…{auctionContractId.slice(-6)}
+                  <T>Contrato</T> {auctionContractId.slice(0, 6)}…{auctionContractId.slice(-6)}
                 </a>
               </div>
             </div>

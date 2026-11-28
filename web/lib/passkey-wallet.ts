@@ -171,11 +171,11 @@ export async function createPasskeyWallet(): Promise<LocalWallet> {
   try {
     credential = (await navigator.credentials.create({
       publicKey: {
-        rp: { name: "RematArte" },
+        rp: { name: "Artemi" },
         user: {
           id: exactArrayBuffer(userId),
           name: `visitante-${base64UrlEncode(userId)}`,
-          displayName: "Visitante de RematArte",
+          displayName: "Visitante de Artemi",
         },
         challenge: exactArrayBuffer(randomBytes(32)),
         pubKeyCredParams: [

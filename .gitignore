@@ -25,3 +25,6 @@ Thumbs.db
 # Stellar CLI (identidades locales) y snapshots de tests Soroban
 .stellar/
 test_snapshots/
+
+# Datos personales de la demo local (nunca versionar)
+web/data/contactos.json

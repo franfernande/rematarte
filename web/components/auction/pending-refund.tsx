@@ -1,5 +1,6 @@
 "use client";
 
+import { T } from "@/components/language-switch";
 import { useState } from "react";
 import { claimRefund, toFriendlyError } from "@/lib/auction";
 import { formatUsdc } from "@/lib/format";
@@ -51,10 +52,11 @@ export function PendingRefund({ amount, onClaimed }: { amount: bigint; onClaimed
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 id="reembolso-pendiente" className="etiqueta !text-ocre">
-            Reembolso pendiente
+            <T>Reembolso pendiente</T>
           </h3>
           <p className="mt-2 text-sm leading-relaxed text-tinta">
-            Tu reembolso quedó pendiente. Tenés <strong>{formatUsdc(amount)} USDC</strong> para reclamar.
+            <T>Otra oferta superó la tuya. La devolución automática no se completó, así que</T> <strong>{formatUsdc(amount)} USDC</strong> <T>quedaron reservados
+            para vos. Tocá Reclamar y confirmá la operación para que vuelvan a tu wallet.</T>
           </p>
         </div>
         <button
@@ -63,7 +65,7 @@ export function PendingRefund({ amount, onClaimed }: { amount: bigint; onClaimed
           disabled={busy || connecting}
           className="min-h-12 rounded-full bg-malbec px-6 font-medium text-cal transition-colors hover:bg-malbec-2 disabled:opacity-50"
         >
-          {busy ? "Reclamando…" : address ? "Reclamar" : "Conectar y reclamar"}
+          <T>{busy ? "Reclamando…" : address ? "Reclamar" : "Conectar y reclamar"}</T>
         </button>
       </div>
       {transaction.state !== "idle" && (

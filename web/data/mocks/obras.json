@@ -1,44 +1,74 @@
 [
   {
     "slug": "atardecer-en-uspallata",
-    "titulo": "Atardecer en Uspallata",
-    "artista": "Artista de ejemplo",
-    "tecnica": "Óleo sobre tela",
-    "medidas": "60 × 80 cm",
-    "anio": 2025,
-    "descripcion": "Obra de prueba: reemplazar por la ficha real.",
-    "imagen": "/mocks/obra.svg",
+    "titulo": "Retrato de Víctor Torrini",
+    "artista": "Fernando Fader",
+    "tecnica": "Óleo sobre cartón",
+    "medidas": "39,5 × 32 cm",
+    "anio": 1913,
+    "descripcion": "Un hombre baja la mirada. El cuello blanco de la camisa recoge la luz entre la barba oscura y el chaleco.",
+    "imagen": "/muestra/fader/torrini.webp",
     "precioMinimoUsdc": 50,
     "incrementoMinimoUsdc": 5,
     "porcentajeArtista": 80,
-    "cierre": "2026-12-20T20:00:00-03:00"
+    "cierre": "2026-12-20T20:00:00-03:00",
+    "artistaSlug": "fernando-fader",
+    "alt": "Víctor Torrini, de barba y chaleco oscuro, con la mirada baja, dentro de un marco dorado.",
+    "reproduccion": {
+      "coleccion": "Museo Nacional de Bellas Artes, Buenos Aires",
+      "inventario": "1664",
+      "catalogo": "https://www.bellasartes.gob.ar/coleccion/obra/1664/",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Fernando_Fader_-_Retrato_de_V%C3%ADctor_Torrini_-_Google_Art_Project.jpg",
+      "credito": "Google Art Project, vía Wikimedia Commons",
+      "licencia": "Dominio público"
+    }
   },
   {
     "slug": "vinedos-al-sur",
-    "titulo": "Viñedos al sur",
-    "artista": "Artista de ejemplo",
-    "tecnica": "Acrílico sobre lienzo",
-    "medidas": "50 × 70 cm",
-    "anio": 2024,
-    "descripcion": "Obra de prueba: reemplazar por la ficha real.",
-    "imagen": "/mocks/obra.svg",
+    "titulo": "La comida de los cerdos",
+    "artista": "Fernando Fader",
+    "tecnica": "Óleo sobre tela",
+    "medidas": "130 × 100 cm",
+    "anio": 1904,
+    "descripcion": "Una mujer se inclina sobre el corral. La luz de costado reúne su mano, la madera y los hocicos que se asoman.",
+    "imagen": "/muestra/fader/corral.webp",
     "precioMinimoUsdc": 35,
     "incrementoMinimoUsdc": 5,
     "porcentajeArtista": 80,
-    "cierre": "2026-12-20T20:10:00-03:00"
+    "cierre": "2026-12-20T20:10:00-03:00",
+    "artistaSlug": "fernando-fader",
+    "alt": "Una mujer de pie alimenta a los cerdos que se acercan a una valla de madera.",
+    "reproduccion": {
+      "coleccion": "Museo Nacional de Bellas Artes, Buenos Aires",
+      "inventario": "1758",
+      "catalogo": "https://www.bellasartes.gob.ar/coleccion/obra/1758/",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Fernando_Fader_-_La_comida_de_los_cerdos_-_Google_Art_Project.jpg",
+      "credito": "Google Art Project, vía Wikimedia Commons",
+      "licencia": "Dominio público"
+    }
   },
   {
     "slug": "cerro-en-calma",
-    "titulo": "Cerro en calma",
-    "artista": "Artista de ejemplo",
-    "tecnica": "Acuarela sobre papel",
-    "medidas": "40 × 55 cm",
-    "anio": 2025,
-    "descripcion": "Obra de prueba: reemplazar por la ficha real.",
-    "imagen": "/mocks/obra.svg",
+    "titulo": "Los mantones de Manila",
+    "artista": "Fernando Fader",
+    "tecnica": "Óleo sobre tela",
+    "medidas": "116 × 140 cm",
+    "anio": 1914,
+    "descripcion": "Mirá cómo los bordados pasan de una figura a otra. Flores, flecos y telas llenan el ancho de la pintura.",
+    "imagen": "/muestra/fader/mantones.webp",
     "precioMinimoUsdc": 25,
     "incrementoMinimoUsdc": 2.5,
     "porcentajeArtista": 75,
-    "cierre": "2026-12-20T20:20:00-03:00"
+    "cierre": "2026-12-20T20:20:00-03:00",
+    "artistaSlug": "fernando-fader",
+    "alt": "Varias figuras se reúnen entre mantones bordados con flores y flecos de colores.",
+    "reproduccion": {
+      "coleccion": "Museo Nacional de Bellas Artes, Buenos Aires",
+      "inventario": "1757",
+      "catalogo": "https://www.bellasartes.gob.ar/coleccion/obra/1757/",
+      "fuente": "https://commons.wikimedia.org/wiki/File:Fernando_Fader_-_Los_mantones_de_Manila_-_Google_Art_Project.jpg",
+      "credito": "Google Art Project, vía Wikimedia Commons",
+      "licencia": "Dominio público"
+    }
   }
 ]

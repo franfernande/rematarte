@@ -1,5 +1,5 @@
 import type { AuctionEvent } from "@/lib/auction-types";
-import { STROOPS_PER_USDC } from "@/lib/format";
+import { formatCountdown, STROOPS_PER_USDC } from "@/lib/format";
 
 // Decimal string for the bid input: no thousands separators, dot as decimal separator.
 export function stroopsToInput(stroops: bigint): string {
@@ -10,6 +10,14 @@ export function stroopsToInput(stroops: bigint): string {
 
 export function sortEventsChronologically(events: AuctionEvent[]): AuctionEvent[] {
   return [...events].sort((a, b) => a.ledger - b.ledger || a.at - b.at || a.txHash.localeCompare(b.txHash));
+}
+
+export function formatCountdownClear(secondsLeft: number): string {
+  const seconds = Math.max(0, Math.floor(secondsLeft));
+  if (seconds >= 3600) return formatCountdown(seconds);
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  return `${minutes} min ${rest} s`;
 }
 
 export function formatRelativeTime(at: number, now: number): string {

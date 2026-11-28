@@ -1,5 +1,6 @@
 "use client";
 
+import { T } from "@/components/language-switch";
 import { useMemo, useState } from "react";
 import { settleAuction, toFriendlyError } from "@/lib/auction";
 import type { AuctionEvent, AuctionState } from "@/lib/auction-types";
@@ -55,19 +56,19 @@ export function SettleCard({ auction, events, onRefresh }: { auction: AuctionSta
     return (
       <section aria-labelledby="liquidacion" className="rounded-sm border border-linea bg-cal-2/40 px-4 py-4">
         <h3 id="liquidacion" className="etiqueta">
-          Cierre
+          <T>Cierre</T>
         </h3>
         <p className="mt-3 font-serif text-2xl leading-tight">
-          {auction.highestBid > 0n ? (
+          <T>{auction.highestBid > 0n ? (
             <>
-              Subasta cerrada · ganó <em className="text-malbec">{winner}</em> con {formatUsdc(auction.highestBid)} USDC
+              <T>Subasta cerrada · ganó</T> <em className="text-malbec"><T>{winner}</T></em> <T>con</T> {formatUsdc(auction.highestBid)} USDC
             </>
           ) : (
             "Subasta cerrada · terminó sin ofertas"
-          )}
+          )}</T>
         </p>
         <p className="mt-2 text-sm leading-relaxed text-tinta-2">
-          La liquidación es abierta: cualquiera puede ejecutarla y el contrato reparte solo entre artista y espacio.
+          <T>La liquidación es abierta: cualquiera puede ejecutarla y el contrato reparte solo entre artista y espacio.</T>
         </p>
         <button
           type="button"
@@ -75,7 +76,7 @@ export function SettleCard({ auction, events, onRefresh }: { auction: AuctionSta
           disabled={busy || connecting}
           className="mt-4 min-h-12 w-full rounded-full bg-malbec px-6 font-medium text-cal transition-colors hover:bg-malbec-2 disabled:opacity-50"
         >
-          {busy ? "Liquidando…" : address ? "Liquidar subasta" : "Conectar y liquidar"}
+          <T>{busy ? "Liquidando…" : address ? "Liquidar subasta" : "Conectar y liquidar"}</T>
         </button>
         {transaction.state !== "idle" && (
           <div className="mt-3">
@@ -95,15 +96,20 @@ export function SettleCard({ auction, events, onRefresh }: { auction: AuctionSta
   const artistWidth = `${auction.artistBps / 100}%`;
   const venueWidth = `${(10_000 - auction.artistBps) / 100}%`;
 
+  const hasSale = amount > 0n;
+
   return (
-    <section aria-labelledby="reparto" className="rounded-sm border border-exito/35 bg-exito/5 px-4 py-4">
-      <h3 id="reparto" className="etiqueta !text-exito">
-        Obra vendida
+    <section
+      aria-labelledby="reparto"
+      className={`rounded-sm border px-4 py-4 ${hasSale ? "border-exito/35 bg-exito/5" : "border-linea bg-cal-2/40"}`}
+    >
+      <h3 id="reparto" className={`etiqueta ${hasSale ? "!text-exito" : ""}`}>
+        <T>{hasSale ? "Obra vendida" : "Cerrada sin ofertas"}</T>
       </h3>
-      {amount > 0n ? (
+      {hasSale ? (
         <>
           <p className="mt-3 font-serif text-2xl leading-tight">
-            Ganó <em className="text-malbec">{winnerName(winner, address)}</em> con {formatUsdc(amount)} USDC
+            <T>Ganó</T> <em className="text-malbec"><T>{winnerName(winner, address)}</T></em> <T>con</T> {formatUsdc(amount)} USDC
           </p>
           <div className="mt-5">
             <div className="flex h-3 overflow-hidden rounded-full bg-linea" aria-hidden>
@@ -112,18 +118,18 @@ export function SettleCard({ auction, events, onRefresh }: { auction: AuctionSta
             </div>
             <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
               <div>
-                <dt className="text-tinta-2">Artista · {percentFromBps(auction.artistBps)}</dt>
+                <dt className="text-tinta-2"><T>Artista ·</T> <T>{percentFromBps(auction.artistBps)}</T></dt>
                 <dd className="font-serif text-xl text-tinta">{formatUsdc(artistAmount)} USDC</dd>
               </div>
               <div>
-                <dt className="text-tinta-2">Espacio · {percentFromBps(10_000 - auction.artistBps)}</dt>
+                <dt className="text-tinta-2"><T>Espacio ·</T> <T>{percentFromBps(10_000 - auction.artistBps)}</T></dt>
                 <dd className="font-serif text-xl text-tinta">{formatUsdc(venueAmount)} USDC</dd>
               </div>
             </dl>
           </div>
         </>
       ) : (
-        <p className="mt-3 text-sm leading-relaxed text-tinta-2">La subasta cerró sin ofertas; no se movieron fondos.</p>
+        <p className="mt-3 text-sm leading-relaxed text-tinta-2"><T>La subasta cerró sin ofertas; no se movieron fondos.</T></p>
       )}
       {settledEvent && (
         <a
@@ -132,7 +138,7 @@ export function SettleCard({ auction, events, onRefresh }: { auction: AuctionSta
           rel="noreferrer"
           className="mt-4 inline-flex min-h-11 items-center text-sm font-medium text-malbec underline decoration-malbec/30 underline-offset-4 transition-colors hover:text-malbec-2"
         >
-          Ver la liquidación en el explorador
+          <T>Ver la liquidación en el explorador</T>
         </a>
       )}
       {transaction.state !== "idle" && (

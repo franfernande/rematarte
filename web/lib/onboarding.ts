@@ -40,7 +40,22 @@ export type FaucetResponse =
 export type FaucetErrorResponse = {
   error: string;
   retryAfterSeconds?: number;
+  categoria?: OnboardingErrorCategory;
 };
+
+export type OnboardingErrorCategory = "red" | "cancelado" | "limite" | "config" | "desconocido";
+
+export class OnboardingError extends Error {
+  categoria: OnboardingErrorCategory;
+  retryAfterSeconds?: number;
+
+  constructor(message: string, options?: { categoria?: OnboardingErrorCategory; retryAfterSeconds?: number; cause?: unknown }) {
+    super(message);
+    this.name = "OnboardingError";
+    this.categoria = options?.categoria ?? "desconocido";
+    if (options?.retryAfterSeconds !== undefined) this.retryAfterSeconds = options.retryAfterSeconds;
+  }
+}
 
 export function createHorizonServer(): Horizon.Server {
   return new Horizon.Server(HORIZON_TESTNET_URL);
@@ -106,7 +121,7 @@ export async function getOnboardingAccountState(address: string): Promise<Onboar
     };
   } catch (error) {
     if (isNotFoundError(error)) return emptyOnboardingAccountState;
-    throw error;
+    throw toOnboardingError(error, "No pudimos leer la cuenta en la red de prueba. Esperá unos segundos y probá de nuevo.");
   }
 }
 
@@ -126,30 +141,47 @@ async function waitForCondition(check: () => Promise<boolean>, attempts = 8, del
   return false;
 }
 
-function friendbotErrorMessage(status: number): string {
+function retryAfterFromHeader(value: string | null): number | undefined {
+  if (!value) return undefined;
+  const seconds = Number(value);
+  return Number.isFinite(seconds) && seconds >= 0 ? Math.ceil(seconds) : undefined;
+}
+
+function friendbotError(status: number, retryAfterSeconds?: number): OnboardingError {
   if (status === 429) {
-    return "Friendbot está recibiendo demasiados pedidos. Esperá un minuto y probá de nuevo.";
+    return new OnboardingError("El servicio que activa cuentas de prueba está recibiendo demasiados pedidos. Esperá un minuto y probá de nuevo.", {
+      categoria: "limite",
+      retryAfterSeconds: retryAfterSeconds ?? 60,
+    });
   }
   if (status >= 500) {
-    return "Friendbot no respondió bien. Esperá unos segundos y probá de nuevo.";
+    return new OnboardingError("El servicio que activa cuentas de prueba no respondió bien. Esperá unos segundos y probá de nuevo.", { categoria: "red", retryAfterSeconds: 15 });
   }
-  return "Friendbot rechazó la activación de la cuenta. Esperá unos segundos y probá de nuevo.";
+  return new OnboardingError("El servicio que activa cuentas de prueba rechazó la activación. Esperá unos segundos y probá de nuevo.", { categoria: "red" });
 }
 
 export async function activateTestAccount(address: string): Promise<void> {
   const current = await getOnboardingAccountState(address);
   if (current.exists) return;
 
-  const response = await fetch(`${FRIENDBOT_URL}?addr=${encodeURIComponent(address)}`, { cache: "no-store" });
+  let response: Response;
+  try {
+    response = await fetch(`${FRIENDBOT_URL}?addr=${encodeURIComponent(address)}`, { cache: "no-store" });
+  } catch (error) {
+    throw toOnboardingError(error, "No pudimos contactar el servicio que activa cuentas de prueba. Revisá tu conexión y probá de nuevo.");
+  }
   if (!response.ok) {
     const body = await response.text().catch(() => "");
     const alreadyExists = body.toLowerCase().includes("already") || body.includes("op_already_exists");
-    if (!alreadyExists) throw new Error(friendbotErrorMessage(response.status));
+    if (!alreadyExists) throw friendbotError(response.status, retryAfterFromHeader(response.headers.get("retry-after")));
   }
 
   const activated = await waitForCondition(async () => (await getOnboardingAccountState(address)).exists);
   if (!activated) {
-    throw new Error("Friendbot aceptó el pedido, pero la cuenta todavía no aparece en Testnet. Esperá unos segundos y probá de nuevo.");
+    throw new OnboardingError("La activación fue aceptada, pero tu cuenta de prueba todavía no aparece en la red. Esperá unos segundos y probá de nuevo.", {
+      categoria: "red",
+      retryAfterSeconds: 15,
+    });
   }
 }
 
@@ -159,28 +191,32 @@ export async function createUsdcTrustline(
 ): Promise<{ hash: string | null }> {
   const current = await getOnboardingAccountState(address);
   if (!current.exists) {
-    throw new Error("La cuenta todavía no está activa en Testnet. Activá la cuenta en el paso anterior.");
+    throw new Error("La cuenta todavía no está activa en la red de prueba. Activá la cuenta en el paso anterior.");
   }
   if (current.hasTrustline) return { hash: null };
 
-  const server = createHorizonServer();
-  const account = await server.loadAccount(address);
-  const asset = new Asset(usdcAssetConfig.code, usdcAssetConfig.issuer);
-  const transaction = new TransactionBuilder(account, {
-    fee: BASE_FEE,
-    networkPassphrase: deployConfig.networkPassphrase,
-  })
-    .addOperation(Operation.changeTrust({ asset }))
-    .setTimeout(180)
-    .build();
+  try {
+    const server = createHorizonServer();
+    const account = await server.loadAccount(address);
+    const asset = new Asset(usdcAssetConfig.code, usdcAssetConfig.issuer);
+    const transaction = new TransactionBuilder(account, {
+      fee: BASE_FEE,
+      networkPassphrase: deployConfig.networkPassphrase,
+    })
+      .addOperation(Operation.changeTrust({ asset }))
+      .setTimeout(180)
+      .build();
 
-  const { signedTxXdr } = await signTransaction(transaction.toXDR(), {
-    networkPassphrase: deployConfig.networkPassphrase,
-    address,
-  });
-  const signedTransaction = TransactionBuilder.fromXDR(signedTxXdr, deployConfig.networkPassphrase);
-  const result = await server.submitTransaction(signedTransaction);
-  return { hash: result.hash };
+    const { signedTxXdr } = await signTransaction(transaction.toXDR(), {
+      networkPassphrase: deployConfig.networkPassphrase,
+      address,
+    });
+    const signedTransaction = TransactionBuilder.fromXDR(signedTxXdr, deployConfig.networkPassphrase);
+    const result = await server.submitTransaction(signedTransaction);
+    return { hash: result.hash };
+  } catch (error) {
+    throw toOnboardingError(error, "No pudimos habilitar USDC de prueba. Probá de nuevo en unos segundos.");
+  }
 }
 
 function isFaucetResponse(value: unknown): value is FaucetResponse {
@@ -195,23 +231,46 @@ function isFaucetResponse(value: unknown): value is FaucetResponse {
 }
 
 export async function requestUsdcFaucet(address: string): Promise<FaucetResponse> {
-  const response = await fetch("/api/faucet", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ address }),
-    cache: "no-store",
-  });
+  let response: Response;
+  try {
+    response = await fetch("/api/faucet", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ address }),
+      cache: "no-store",
+    });
+  } catch (error) {
+    throw toOnboardingError(error, "No pudimos pedir el envío de USDC de prueba. Probá de nuevo en unos segundos.");
+  }
   const data: unknown = await response.json().catch(() => null);
 
   if (!response.ok) {
-    const message =
+    const serverMessage =
       typeof data === "object" && data !== null && "error" in data && typeof data.error === "string"
         ? data.error
-        : "El faucet de prueba no pudo responder. Probá de nuevo en unos segundos.";
-    throw new Error(message);
+        : "El envío de USDC de prueba no pudo responder. Probá de nuevo en unos segundos.";
+    const bodyRetry =
+      typeof data === "object" && data !== null && "retryAfterSeconds" in data && typeof data.retryAfterSeconds === "number"
+        ? Math.ceil(data.retryAfterSeconds)
+        : undefined;
+    const retryAfterSeconds = bodyRetry ?? retryAfterFromHeader(response.headers.get("retry-after"));
+    const retryText = retryAfterSeconds ? ` Podés reintentar en ${retryAfterSeconds} ${retryAfterSeconds === 1 ? "segundo" : "segundos"}.` : "";
+    const bodyCategoria =
+      typeof data === "object" && data !== null && "categoria" in data && typeof data.categoria === "string" ? data.categoria : undefined;
+    const categoria =
+      bodyCategoria === "red" || bodyCategoria === "cancelado" || bodyCategoria === "limite" || bodyCategoria === "config" || bodyCategoria === "desconocido"
+        ? bodyCategoria
+        : response.status === 429
+          ? "limite"
+          : serverMessage.includes("configurado") || serverMessage.includes("configurada")
+            ? "config"
+            : response.status >= 500
+              ? "red"
+              : "desconocido";
+    throw new OnboardingError(`${serverMessage}${retryText}`, { categoria, retryAfterSeconds });
   }
   if (!isFaucetResponse(data)) {
-    throw new Error("El faucet de prueba devolvió una respuesta inesperada. Avisale al equipo y probá de nuevo.");
+    throw new OnboardingError("El envío de USDC de prueba devolvió una respuesta inesperada. Avisale al equipo y probá de nuevo.", { categoria: "red" });
   }
   return data;
 }
@@ -257,7 +316,7 @@ export async function prepareAccount({
       await activateTestAccount(address);
       state = await getOnboardingAccountState(address);
     }
-    if (!state.exists) throw new Error("La cuenta todavía no aparece activa en Testnet.");
+    if (!state.exists) throw new Error("La cuenta todavía no aparece activa en la red de prueba.");
     emit("fund", "done");
 
     currentStep = "trustline";
@@ -281,9 +340,9 @@ export async function prepareAccount({
     emit("usdc", "done");
     emit("done", "done");
   } catch (error) {
-    const message = onboardingErrorMessage(error, "No pudimos preparar la cuenta de prueba.");
-    emit(currentStep, "error", message);
-    throw new Error(message);
+    const normalized = toOnboardingError(error, "No pudimos preparar la cuenta de prueba.");
+    emit(currentStep, "error", normalized.message);
+    throw normalized;
   }
 }
 
@@ -308,36 +367,77 @@ export function horizonResultCodes(error: unknown): string[] {
   return codes;
 }
 
-// Traduce errores frecuentes de wallet, red y Horizon a una causa + acción entendible.
-export function onboardingErrorMessage(error: unknown, fallback: string): string {
+function responseStatus(error: unknown): number | undefined {
+  if (typeof error !== "object" || error === null || !("response" in error)) return undefined;
+  const response = error.response;
+  if (typeof response !== "object" || response === null || !("status" in response)) return undefined;
+  return typeof response.status === "number" ? response.status : undefined;
+}
+
+// Normaliza errores sin exponer JSON ni detalles técnicos crudos en la UI.
+export function toOnboardingError(error: unknown, fallback: string): OnboardingError {
+  if (error instanceof OnboardingError) return error;
+
   const codes = horizonResultCodes(error);
   if (codes.some((code) => code === "op_low_reserve" || code === "op_underfunded" || code === "tx_insufficient_balance")) {
-    return "La cuenta no tiene XLM de prueba suficiente para la reserva o la comisión. Volvé al paso 2, activá la cuenta con Friendbot y probá otra vez.";
+    return new OnboardingError(
+      "A tu cuenta de prueba le falta saldo para activarse. Volvé al paso de activar la cuenta y probá otra vez.",
+    );
   }
   if (codes.some((code) => code === "tx_bad_seq")) {
-    return "La cuenta quedó sincronizando con la red. Esperá unos segundos y probá de nuevo.";
+    return new OnboardingError("La cuenta quedó actualizándose en la red de prueba. Esperá unos segundos y probá de nuevo.", {
+      categoria: "red",
+      retryAfterSeconds: 10,
+    });
   }
   if (codes.some((code) => code === "op_no_trust")) {
-    return "La cuenta todavía no tiene USDC de prueba habilitado. Completá el paso 3 y probá otra vez.";
+    return new OnboardingError("La cuenta todavía no tiene USDC de prueba habilitado. Completá el paso 3 y probá otra vez.");
+  }
+
+  const status = responseStatus(error);
+  if (status === 429) {
+    return new OnboardingError("La red de prueba está recibiendo demasiados pedidos. Esperá un minuto y probá de nuevo.", {
+      categoria: "limite",
+      retryAfterSeconds: 60,
+    });
+  }
+  if (status !== undefined && status >= 500) {
+    return new OnboardingError("La red de prueba no respondió bien. Esperá unos segundos y probá de nuevo.", {
+      categoria: "red",
+      retryAfterSeconds: 15,
+    });
   }
 
   const raw = error instanceof Error ? error.message : "";
   const lower = raw.toLowerCase();
-  if (lower.includes("reject") || lower.includes("denied") || lower.includes("cancelled") || lower.includes("canceled")) {
-    return "La firma fue cancelada o rechazada en la wallet. Tocá el botón otra vez y aceptá la firma para continuar.";
+  if (
+    lower.includes("reject") ||
+    lower.includes("denied") ||
+    lower.includes("cancelled") ||
+    lower.includes("canceled") ||
+    lower.includes("user closed") ||
+    lower.includes("closed the modal")
+  ) {
+    return new OnboardingError("Cancelaste la firma en tu wallet. No se envió nada; tocá el botón otra vez y aceptá la firma para continuar.", {
+      categoria: "cancelado",
+    });
   }
-  if (lower.includes("failed to fetch") || lower.includes("networkerror") || lower.includes("network error")) {
-    return "No pudimos conectarnos con Stellar Testnet. Revisá tu conexión a internet y probá de nuevo.";
+  if (lower.includes("failed to fetch") || lower.includes("networkerror") || lower.includes("network error") || lower.includes("econnrefused") || lower.includes("enotfound")) {
+    return new OnboardingError("No pudimos conectarnos con la red de prueba. Revisá tu conexión a internet y probá de nuevo.", { categoria: "red" });
   }
   if (lower.includes("timeout") || lower.includes("timed out")) {
-    return "Stellar Testnet tardó demasiado en responder. Esperá unos segundos y probá de nuevo.";
+    return new OnboardingError("La red de prueba tardó demasiado en responder. Esperá unos segundos y probá de nuevo.", {
+      categoria: "red",
+      retryAfterSeconds: 15,
+    });
   }
   if (lower.includes("network") && lower.includes("passphrase")) {
-    return "La wallet parece estar en otra red. Cambiala a Stellar Testnet y probá de nuevo.";
+    return new OnboardingError("La wallet parece estar en otra red. Cambiala a la red de prueba y probá de nuevo.", { categoria: "config" });
   }
-  if (raw.trim()) {
-    return `${fallback} ${raw} Probá de nuevo en unos segundos.`;
-  }
-  return `${fallback} Probá de nuevo en unos segundos.`;
+  return new OnboardingError(`${fallback} Probá de nuevo en unos segundos.`);
 }
 
+// Traduce errores frecuentes de wallet, red y Horizon a una causa + acción entendible.
+export function onboardingErrorMessage(error: unknown, fallback: string): string {
+  return toOnboardingError(error, fallback).message;
+}

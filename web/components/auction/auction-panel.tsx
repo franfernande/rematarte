@@ -1,5 +1,6 @@
 "use client";
 
+import { T, TranslatedAttributes } from "@/components/language-switch";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { readPendingRefund } from "@/lib/auction";
 import type { AuctionEvent, AuctionPhase } from "@/lib/auction-types";
@@ -17,14 +18,15 @@ type PendingResult = {
   value: bigint;
 };
 
-function phaseLabel(phase: AuctionPhase): string {
-  if (phase === "settled") return "Vendida";
-  if (phase === "ended") return "Cerrada";
+function phaseLabel(phase: AuctionPhase, hasBid: boolean): string {
+  if (phase === "settled") return hasBid ? "Vendida" : "Cerrada sin ofertas";
+  if (phase === "ended") return hasBid ? "Cerrada" : "Cerrada sin ofertas";
   if (phase === "closing") return "Últimos minutos";
   return "En vivo";
 }
 
-function phaseClass(phase: AuctionPhase): string {
+function phaseClass(phase: AuctionPhase, hasBid: boolean): string {
+  if ((phase === "settled" || phase === "ended") && !hasBid) return "!text-piedra";
   if (phase === "settled") return "!text-malbec";
   if (phase === "ended") return "!text-piedra";
   return "!text-ocre";
@@ -42,15 +44,15 @@ function latestRefundFor(events: AuctionEvent[], address: string | null): Extrac
 
 function PanelSkeleton() {
   return (
-    <div className="cartela px-5 py-6 sm:px-6" aria-label="Cargando subasta">
-      <p className="etiqueta">Subasta</p>
+    <TranslatedAttributes><div className="cartela px-5 py-6 sm:px-6" aria-label="Cargando subasta">
+      <p className="etiqueta"><T>Subasta</T></p>
       <div className="mt-6 animate-pulse space-y-5">
         <div className="h-12 w-2/3 rounded-sm bg-linea/50" />
         <div className="h-4 w-1/2 rounded-sm bg-linea/50" />
         <div className="h-14 rounded-sm bg-linea/40" />
         <div className="h-12 rounded-full bg-linea/50" />
       </div>
-    </div>
+    </div></TranslatedAttributes>
   );
 }
 
@@ -112,15 +114,15 @@ export function AuctionPanel({ auctionId, titulo }: { auctionId: number; titulo:
   if (!auction) {
     return (
       <div className="cartela px-5 py-6 sm:px-6">
-        <p className="etiqueta">Subasta</p>
-        <h2 className="mt-4 font-serif text-2xl leading-tight">No pudimos leer la subasta.</h2>
-        <p className="mt-2 text-sm leading-relaxed text-tinta-2">{error?.message ?? "La red no respondió. Podés intentar de nuevo."}</p>
+        <p className="etiqueta"><T>Subasta</T></p>
+        <h2 className="mt-4 font-serif text-2xl leading-tight"><T>No pudimos leer la subasta.</T></h2>
+        <p className="mt-2 text-sm leading-relaxed text-tinta-2"><T>{error?.message ?? "La red no respondió. Podés intentar de nuevo."}</T></p>
         <button
           type="button"
           onClick={() => void refresh()}
           className="mt-5 min-h-12 rounded-full border border-tinta/20 px-6 font-medium transition-colors hover:border-tinta hover:bg-cal-2"
         >
-          Reintentar
+          <T>Reintentar</T>
         </button>
       </div>
     );
@@ -132,7 +134,9 @@ export function AuctionPanel({ auctionId, titulo }: { auctionId: number; titulo:
   const shownAmount = hasBid ? auction.highestBid : auction.minPrice;
   const winnerAddress = auction.highestBidder ? shortAddress(auction.highestBidder) : "otra wallet";
   const winningText = !hasBid
-    ? "Todavía no hay ofertas"
+    ? phase === "ended" || phase === "settled"
+      ? "Cerrada sin ofertas"
+      : "Todavía no hay ofertas"
     : phase === "ended" || phase === "settled"
       ? auction.highestBidder === address
         ? "Ganaste vos"
@@ -148,26 +152,30 @@ export function AuctionPanel({ auctionId, titulo }: { auctionId: number; titulo:
       !latestRefund.pending &&
       pendingRefund === 0n,
   );
+  const amountLabel = hasBid ? (phase === "open" || phase === "closing" ? "Puja actual" : "Puja ganadora") : "Precio base";
 
   return (
     <section aria-labelledby={`titulo-panel-subasta-${auctionId}`} className="cartela animate-aparecer overflow-hidden">
       <div className="border-b border-linea px-5 py-5 sm:px-6">
         <div className="flex items-center justify-between gap-3">
           <h2 id={`titulo-panel-subasta-${auctionId}`} className="etiqueta">
-            Subasta
+            <T>Subasta</T>
           </h2>
-          <p className={`etiqueta flex shrink-0 items-center gap-2 ${phaseClass(phase)}`}>
+          <p className={`etiqueta flex shrink-0 items-center gap-2 ${phaseClass(phase, hasBid)}`}>
             {(phase === "open" || phase === "closing") && <span className="size-1.5 animate-latido rounded-full bg-ocre" aria-hidden />}
-            {phaseLabel(phase)}
+            <T>{phaseLabel(phase, hasBid)}</T>
           </p>
         </div>
 
-        <div className={`-mx-2 mt-4 rounded-sm px-2 py-3 transition-colors duration-700 ${flashBid ? "bg-ocre/20" : "bg-transparent"}`}>
-          <p className="etiqueta">{hasBid ? (phase === "open" || phase === "closing" ? "Puja actual" : "Puja ganadora") : "Precio base"}</p>
+        <div className={`-mx-2 mt-2 rounded-sm px-2 py-1 transition-colors duration-700 ${flashBid ? "bg-ocre/20" : "bg-transparent"}`}>
+          <div aria-live="polite" aria-atomic="true" className="sr-only">
+            <T>{amountLabel}</T>: {formatUsdc(shownAmount)} USDC
+          </div>
+          <p className="etiqueta"><T>{amountLabel}</T></p>
           <p className="mt-2 font-serif text-[3.4rem] leading-none tracking-tight text-tinta sm:text-6xl">
             {formatUsdc(shownAmount)} <span className="text-2xl italic text-piedra sm:text-3xl">USDC</span>
           </p>
-          <p className="mt-2 text-sm font-medium text-tinta-2">{winningText}</p>
+          <p className="mt-2 text-sm font-medium text-tinta-2"><T>{winningText}</T></p>
         </div>
 
         <div className="mt-2 border-t border-linea pt-4">
@@ -178,9 +186,9 @@ export function AuctionPanel({ auctionId, titulo }: { auctionId: number; titulo:
       <div className="space-y-4 px-5 py-5 sm:px-6">
         {error && (
           <div role="alert" className="rounded-sm border border-malbec/30 bg-malbec/5 px-3 py-2 text-sm text-malbec">
-            <p>No pudimos actualizar la puja: {error.message}</p>
+            <p><T>No pudimos actualizar la puja:</T> <T>{error.message}</T></p>
             <button type="button" onClick={() => void refresh()} className="mt-1 min-h-8 font-medium underline underline-offset-4">
-              Reintentar
+              <T>Reintentar</T>
             </button>
           </div>
         )}
@@ -189,7 +197,7 @@ export function AuctionPanel({ auctionId, titulo }: { auctionId: number; titulo:
 
         {showOutbid && latestRefund && (
           <div aria-live="polite" className="rounded-sm border border-exito/35 bg-exito/5 px-4 py-3 text-sm leading-relaxed text-exito">
-            Te superaron. Tus {formatUsdc(latestRefund.amount)} USDC ya volvieron a tu wallet.
+            <T>Te superaron. Tus</T> {formatUsdc(latestRefund.amount)} <T>USDC ya volvieron a tu wallet.</T>
           </div>
         )}
 
@@ -198,8 +206,8 @@ export function AuctionPanel({ auctionId, titulo }: { auctionId: number; titulo:
         {(phase === "ended" || phase === "settled") && <SettleCard auction={auction} events={events} onRefresh={refreshAll} />}
       </div>
 
-      <div className="border-t border-linea px-5 py-5 sm:px-6">
-        <BidHistory events={events} now={effectiveNow} address={address} />
+      <div className="border-t border-linea px-5 sm:px-6">
+        <BidHistory events={events} now={effectiveNow} address={address} hasBid={hasBid} highestBid={auction.highestBid} onRetry={refreshAll} />
       </div>
     </section>
   );

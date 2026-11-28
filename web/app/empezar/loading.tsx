@@ -1,6 +1,7 @@
+import { TranslatedAttributes } from "@/components/language-switch";
 export default function EmpezarLoading() {
   return (
-    <section className="mx-auto w-full max-w-6xl px-5 py-8 sm:py-12" aria-label="Cargando onboarding">
+    <TranslatedAttributes><section className="contenedor py-8 sm:py-12" aria-label="Cargando onboarding">
       <div className="max-w-2xl animate-pulse">
         <div className="h-3 w-36 rounded-full bg-linea" />
         <div className="mt-5 h-14 rounded-2xl bg-cal-2" />
@@ -11,6 +12,6 @@ export default function EmpezarLoading() {
           <div key={step} className="h-32 rounded-2xl border border-linea bg-papel/70" />
         ))}
       </div>
-    </section>
+    </section></TranslatedAttributes>
   );
 }

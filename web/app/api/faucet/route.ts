@@ -76,9 +76,10 @@ function json(body: FaucetResponse | FaucetErrorResponse, status = 200, headers?
   return Response.json(body, { status, headers });
 }
 
-function error(status: number, message: string, retryAfterSeconds?: number): Response {
+function error(status: number, message: string, retryAfterSeconds?: number, categoria?: FaucetErrorResponse["categoria"]): Response {
+  const resolvedCategoria = categoria ?? (status === 429 ? "limite" : status >= 500 ? "red" : "desconocido");
   return json(
-    { error: message, ...(retryAfterSeconds ? { retryAfterSeconds } : {}) },
+    { error: message, ...(retryAfterSeconds ? { retryAfterSeconds } : {}), categoria: resolvedCategoria },
     status,
     retryAfterSeconds ? { "Retry-After": String(retryAfterSeconds) } : undefined,
   );
@@ -104,18 +105,18 @@ function paymentFailureResponse(errorUnknown: unknown): Response {
   const codes = horizonResultCodes(errorUnknown);
 
   if (codes.includes("op_underfunded")) {
-    return error(503, "El faucet de prueba no tiene saldo disponible en este momento. Avisale al equipo.");
+    return error(503, "El envío de USDC de prueba no tiene saldo disponible en este momento. Avisale al equipo.", undefined, "config");
   }
   if (codes.includes("op_no_trust")) {
     return error(400, "La cuenta todavía no tiene USDC de prueba habilitado. Volvé al paso 3 y probá de nuevo.");
   }
   if (codes.includes("tx_bad_seq")) {
-    return error(409, "La cuenta del faucet quedó sincronizando con la red. Esperá unos segundos y probá de nuevo.");
+    return error(409, "La cuenta que envía USDC de prueba quedó actualizándose en la red de prueba. Esperá unos segundos y probá de nuevo.");
   }
   if (codes.includes("tx_insufficient_balance")) {
-    return error(503, "El faucet de prueba no puede pagar la comisión de red en este momento. Avisale al equipo.");
+    return error(503, "El envío de USDC de prueba no puede completarse en este momento. Avisale al equipo.");
   }
-  return error(502, "Stellar Testnet no confirmó el envío. Esperá unos segundos y probá de nuevo.");
+  return error(502, "La red de prueba no confirmó el envío. Esperá unos segundos y probá de nuevo.");
 }
 
 export async function POST(request: NextRequest) {
@@ -128,12 +129,12 @@ export async function POST(request: NextRequest) {
 
   const address = readAddress(body);
   if (!address || !StrKey.isValidEd25519PublicKey(address)) {
-    return error(400, "La dirección no es una cuenta Stellar válida. Conectá tu wallet y probá de nuevo.");
+    return error(400, "La dirección no es válida. Conectá tu wallet y probá de nuevo.");
   }
 
   const distributor = distributorKeypair();
   if (!distributor) {
-    return error(503, "El faucet de prueba no está configurado en este servidor. Avisale al equipo.");
+    return error(503, "El envío de USDC de prueba no está configurado en este servidor. Avisale al equipo.", undefined, "config");
   }
 
   const server = createHorizonServer();
@@ -142,9 +143,9 @@ export async function POST(request: NextRequest) {
     account = await server.loadAccount(address);
   } catch (loadError) {
     if (isNotFoundError(loadError)) {
-      return error(400, "La cuenta todavía no está activa en Testnet. Volvé al paso 2 y activala con Friendbot.");
+      return error(400, "La cuenta todavía no está activa en la red de prueba. Volvé al paso 2 y activá tu cuenta.");
     }
-    return error(502, "No pudimos leer tu cuenta en Stellar Testnet. Esperá unos segundos y probá de nuevo.");
+    return error(502, "No pudimos leer tu cuenta en la red de prueba. Esperá unos segundos y probá de nuevo.");
   }
 
   const usdcLine = findAssetBalanceLine(account.balances, deployConfig.usdc.code, deployConfig.usdc.issuer);
@@ -171,9 +172,9 @@ export async function POST(request: NextRequest) {
     distributorAccount = await server.loadAccount(distributor.publicKey());
   } catch (loadError) {
     if (isNotFoundError(loadError)) {
-      return error(503, "El faucet de prueba no está configurado correctamente. Avisale al equipo.");
+      return error(503, "El envío de USDC de prueba no está configurado correctamente. Avisale al equipo.", undefined, "config");
     }
-    return error(502, "No pudimos leer la cuenta del faucet en Stellar Testnet. Esperá unos segundos y probá de nuevo.");
+    return error(502, "No pudimos leer la cuenta que envía USDC de prueba en la red de prueba. Esperá unos segundos y probá de nuevo.");
   }
 
   const amountStroops = ONBOARDING_TARGET_STROOPS - currentBalance;
