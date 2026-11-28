@@ -26,5 +26,8 @@ Thumbs.db
 .stellar/
 test_snapshots/
 
+# Datos personales de la demo local (nunca versionar)
+web/data/contactos.json
+
 # Vercel (enlace local de la CLI)
 .vercel

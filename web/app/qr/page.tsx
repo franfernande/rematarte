@@ -1,3 +1,4 @@
+import { T, TranslatedAttributes } from "@/components/language-switch";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { Suspense } from "react";
@@ -11,12 +12,6 @@ export const metadata: Metadata = {
   title: "Cartelas QR",
   description: "Cartelas imprimibles con QR para las obras de la muestra Artemi.",
 };
-
-const cierreFormat = new Intl.DateTimeFormat("es-AR", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "America/Argentina/Mendoza",
-});
 
 const precioFormat = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 2,
@@ -62,7 +57,7 @@ async function PrintableQrCards() {
     <>
       {local && (
         <p className="mb-5 rounded-lg border border-ocre/40 bg-ocre/10 px-4 py-3 text-sm leading-relaxed text-tinta-2 print:hidden">
-          Estos QR apuntan a localhost: generalos desde la URL pública de Vercel.
+          <T>Estos QR apuntan a localhost: generalos desde la URL pública de Vercel.</T>
         </p>
       )}
       <div className="qr-list grid gap-6">
@@ -75,7 +70,8 @@ async function PrintableQrCards() {
             medidas={obra.medidas}
             anio={obra.anio}
             precioBase={precioFormat.format(obra.precioMinimoUsdc)}
-            cierre={cierreFormat.format(new Date(obra.cierre))}
+            cierre={obra.cierre}
+            reproduccion={Boolean(obra.reproduccion)}
             qrSvg={qrSvg}
             displayUrl={displayUrl}
           />
@@ -87,7 +83,7 @@ async function PrintableQrCards() {
 
 function QrCardsFallback() {
   return (
-    <div className="qr-list grid gap-6" aria-label="Preparando cartelas">
+    <TranslatedAttributes><div className="qr-list grid gap-6" aria-label="Preparando cartelas">
       {[0, 1, 2].map((item) => (
         <div key={item} className="cartela h-72 animate-pulse p-6">
           <div className="h-4 w-32 rounded bg-linea" />
@@ -95,22 +91,22 @@ function QrCardsFallback() {
           <div className="mt-4 h-4 w-1/2 rounded bg-linea" />
         </div>
       ))}
-    </div>
+    </div></TranslatedAttributes>
   );
 }
 
 export default function QrPage() {
   return (
-    <div className="qr-page mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+    <div className="qr-page contenedor py-6 sm:py-8">
       <header className="qr-screen-header flex flex-col gap-5 border-b border-linea pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-2xl">
-          <p className="etiqueta">Impresión A4</p>
+          <p className="etiqueta"><T>Impresión A4</T></p>
           <h1 className="mt-3 font-serif text-4xl leading-tight text-tinta sm:text-5xl">
-            Cartelas con <span className="italic text-malbec">QR</span> para la muestra
+            <T>Cartelas con</T> <span className="italic text-malbec">QR</span> <T>para la muestra</T>
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-tinta-2 sm:text-base">
-            Imprimí esta página en A4, recortá por las líneas punteadas y pegá una cartela al lado de cada obra.
-            Cada QR abre la ficha correspondiente para ver la puja y ofertar.
+            <T>Imprimí esta página en A4, recortá por las líneas punteadas y pegá una cartela al lado de cada obra.
+            Cada QR abre la ficha correspondiente para ver la puja y ofertar.</T>
           </p>
         </div>
         <div className="shrink-0 print:hidden">

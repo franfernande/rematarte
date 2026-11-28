@@ -1,154 +1,46 @@
+import { AcequiaDivisor } from "@/components/brand/acequia";
+import { T, TranslatedAttributes } from "@/components/language-switch";
+import Image from "next/image";
 import Link from "next/link";
-import { AuctionBadge } from "@/components/auction/auction-badge";
-import { ObraArte } from "@/components/obra-arte";
-import { dataSources, getDeploy, getObras } from "@/lib/data";
+import { Suspense } from "react";
+import { ArtistaRetrato } from "@/components/artistas/artista-marca";
+import { Agenda } from "@/components/agenda";
+import { getArtistas } from "@/lib/data";
+import mantones from "@/public/muestra/fader/mantones.webp";
 
-const cierreFormat = new Intl.DateTimeFormat("es-AR", {
-  day: "numeric",
-  month: "long",
-  hour: "2-digit",
-  minute: "2-digit",
-  timeZone: "America/Argentina/Mendoza",
-});
-
-const roman = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
-
-const pasos = [
-  { n: "01", titulo: "Escaneás el QR", texto: "La ficha abre en el celu, sin instalar nada: la obra, la puja actual y el cierre." },
-  { n: "02", titulo: "Ofertar es depositar", texto: "Tus USDC quedan en un contrato inteligente. No es una promesa: es plata que ya está." },
-  { n: "03", titulo: "Si te superan, vuelve", texto: "El reembolso viaja en la misma transacción que la oferta nueva. Sin pedirlo, sin esperar." },
-  { n: "04", titulo: "Al cierre, se reparte", texto: "La artista y el espacio cobran solos, con el porcentaje fijado antes de empezar." },
-];
-
-export default function Home() {
-  const obras = getObras();
-  const { subastas } = getDeploy();
-  const usingMocks = dataSources.obras === "mock";
-
+export default function InicioPage() {
+  const artistas = getArtistas();
   return (
     <>
-      <section className="mx-auto grid w-full max-w-6xl items-center gap-12 px-5 pb-16 pt-12 sm:pt-20 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="animate-aparecer">
-          <p className="etiqueta !text-malbec">Muestra en vivo · Mendoza</p>
-          <h1 className="mt-5 font-serif text-[3.4rem] leading-[0.95] tracking-tight sm:text-7xl lg:text-[5.5rem]">
-            La obra cuelga en la pared.
-            <br />
-            <em className="text-malbec">La puja vive en la cadena.</em>
-          </h1>
-          <p className="mt-7 max-w-xl text-lg leading-relaxed text-tinta-2">
-            Escaneá el QR de la obra que te gustó y ofertá en USDC desde el celu. Tu oferta queda depositada: si te
-            superan, te la devolvemos al instante; si ganás, la artista ya cobró.
-          </p>
-          <div className="mt-9 flex flex-wrap gap-3">
-            <a
-              href="#muestra"
-              className="inline-flex min-h-12 items-center rounded-full bg-malbec px-7 font-medium text-cal transition-colors hover:bg-malbec-2"
-            >
-              Ver la muestra
-            </a>
-            <Link
-              href="/empezar"
-              className="inline-flex min-h-12 items-center rounded-full border border-tinta/20 px-7 font-medium transition-colors hover:border-tinta hover:bg-papel"
-            >
-              Empezar en 1 minuto
-            </Link>
-          </div>
-        </div>
-
-        {obras[0] && (
-          <Link
-            href={`/obra/${obras[0].slug}`}
-            className="group relative mx-auto w-full max-w-sm animate-aparecer [animation-delay:150ms] lg:max-w-md"
-          >
-            <div className="marco rotate-[-1.5deg] transition-transform duration-500 group-hover:rotate-0">
-              <div className="paspartu">
-                <div className="aspect-[4/5] overflow-hidden">
-                  <ObraArte obra={obras[0]} />
-                </div>
-              </div>
-            </div>
-            <div className="cartela absolute -bottom-8 -left-4 w-60 rotate-[1deg] px-4 py-3 sm:-left-10">
-              <p className="font-serif text-xl italic leading-tight">{obras[0].titulo}</p>
-              <p className="mt-1 text-xs text-tinta-2">
-                {obras[0].artista} · {obras[0].tecnica}
-              </p>
-              <p className="etiqueta mt-2 flex items-center gap-2 !text-ocre">
-                <span className="size-1.5 animate-latido rounded-full bg-ocre" aria-hidden />
-                En subasta
-              </p>
-            </div>
-          </Link>
-        )}
-      </section>
-
-      <section aria-labelledby="como" className="border-y border-linea bg-papel/60">
-        <div className="mx-auto w-full max-w-6xl px-5 py-16">
-          <p className="etiqueta">El recorrido</p>
-          <h2 id="como" className="mt-3 font-serif text-4xl sm:text-5xl">
-            Cuatro pasos, <em className="text-malbec">del QR al cobro.</em>
-          </h2>
-          <ol className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {pasos.map((paso) => (
-              <li key={paso.n} className="border-t-2 border-tinta pt-5 last:border-malbec">
-                <span className="font-serif text-xl italic text-malbec">{paso.n}</span>
-                <h3 className="mt-2 font-serif text-3xl leading-tight">{paso.titulo}</h3>
-                <p className="mt-3 leading-relaxed text-tinta-2">{paso.texto}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      <section id="muestra" aria-labelledby="muestra-titulo" className="mx-auto w-full max-w-6xl scroll-mt-20 px-5 pt-16">
-        <div className="flex flex-wrap items-end justify-between gap-4">
+      <section className="sala-portada portada-vinedo" aria-labelledby="inicio-titulo">
+        <div aria-hidden="true" className="vinedo-paisaje" />
+        <div className="contenedor grid items-center gap-8 py-10 sm:py-16 lg:grid-cols-[.9fr_1.1fr] lg:gap-16">
           <div>
-            <p className="etiqueta">La muestra</p>
-            <h2 id="muestra-titulo" className="mt-3 font-serif text-4xl sm:text-5xl">
-              Obras en <em className="text-malbec">subasta</em>
-            </h2>
+            <p className="sala-folio"><T>Galería digital de Mendoza</T></p>
+            <h1 id="inicio-titulo" className="sala-titulo"><T>Mendoza, de cerca</T></h1>
+            <p className="sala-descripcion"><T>Hay historias que se entienden mejor frente a un cuadro. En Artemi podés recorrer una muestra, conocer a quienes pintaron estas tierras y seguir la puja desde la sala o desde casa.</T></p>
+            <div className="sala-enlaces"><Link href="/muestra" className="sala-boton"><T>Recorré la muestra</T></Link><a href="#agenda" className="sala-texto"><T>Próximos eventos</T></a></div>
           </div>
-          {usingMocks && (
-            <p className="rounded-full border border-dashed border-ocre px-4 py-2 text-xs text-tinta-2">
-              Obras de ejemplo: las fichas reales llegan con <code className="font-mono">obras.json</code>
-            </p>
-          )}
+          <figure><TranslatedAttributes><Image src={mantones} preload alt="Figuras reunidas entre mantones bordados con flores y flecos." sizes="(min-width: 1024px) 48vw, 94vw" className="h-auto w-full" /></TranslatedAttributes><figcaption className="pie-lamina"><span><cite>Los mantones de Manila</cite>, Fernando Fader, 1914.</span><a className="underline" href="https://www.bellasartes.gob.ar/coleccion/obra/1757/">Museo Nacional de Bellas Artes</a></figcaption></figure>
         </div>
-
-        <ul className="mt-10 grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
-          {obras.map((obra, i) => {
-            const auctionId = subastas[obra.slug];
-            return (
-              <li key={obra.slug} className="animate-aparecer" style={{ animationDelay: `${i * 90}ms` }}>
-                <Link href={`/obra/${obra.slug}`} className="group block">
-                  <div className="marco transition-transform duration-300 group-hover:-translate-y-1">
-                    <div className="paspartu !p-3">
-                      <div className="aspect-[4/5] overflow-hidden">
-                        <ObraArte obra={obra} className="transition-transform duration-700 group-hover:scale-[1.03]" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="cartela mt-5 px-4 py-3">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <p className="font-serif text-2xl italic leading-tight">{obra.titulo}</p>
-                      <span className="font-serif text-lg italic text-piedra">{roman[i] ?? i + 1}</span>
-                    </div>
-                    <p className="mt-1 text-sm text-tinta-2">
-                      {obra.artista} · {obra.tecnica}, {obra.anio}
-                    </p>
-                    <div className="mt-3 border-t border-linea pt-3">
-                      {auctionId === undefined ? (
-                        <p className="text-sm text-piedra">Subasta todavía no publicada</p>
-                      ) : (
-                        <AuctionBadge auctionId={auctionId} />
-                      )}
-                    </div>
-                    <p className="mt-2 text-xs text-piedra">Cierra el {cierreFormat.format(new Date(obra.cierre))}</p>
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+      </section>
+      <section id="muestra" className="contenedor scroll-mt-28 py-14">
+        <h2 className="landing-heading"><T>Artistas para descubrir</T></h2>
+            <AcequiaDivisor />
+        <div className="mt-7 grid gap-7 md:grid-cols-3">{artistas.map(artista => <article data-entrada key={artista.slug} className="border-t border-malbec pt-4"><ArtistaRetrato artista={artista} className="mb-4" /><p className="etiqueta"><T>{artista.obras.length ? "En la muestra" : artista.proximas?.length ? "Próximamente" : "Archivo de artistas"}</T></p><h3 className="mt-3 font-serif text-4xl">{artista.nombre}</h3><p className="my-3 max-w-prose leading-relaxed text-tinta-2"><T>{artista.bio}</T></p><Link href={`/artistas/${artista.slug}`} className="sala-texto"><T>Ver perfil</T><span className="sr-only"> · {artista.nombre}</span></Link></article>)}</div>
+      </section>
+      <section id="agenda" className="scroll-mt-28 border-y border-linea bg-papel">
+        <div className="contenedor landing-band"><div><p className="sala-folio"><T>Agenda cultural</T></p><h2 className="landing-heading mt-3"><T>Qué viene en Mendoza</T></h2><p className="mt-4 max-w-sm text-tinta-2"><T>Una selección de actividades de la región. Cada enlace lleva al programa del organizador.</T></p></div><Suspense fallback={<p><T>Cargando agenda…</T></p>}><Agenda /></Suspense></div>
+      </section>
+      <section className="contenedor landing-band"><h2 className="landing-heading"><T>Cómo funciona Artemi</T></h2><ol className="landing-steps">
+        <li><h3><T>Recorré la sala</T></h3><p><T>Abrí la muestra desde acá o escaneá el QR al lado del cuadro. Podés ampliar la imagen, leer su historia y consultar la ficha sin conectar una cuenta.</T></p></li>
+        <li><h3><T>Seguí una oferta</T></h3><p><T>En la ficha vas a ver el monto y el tiempo que queda. En esta demo, cada oferta se respalda con USDC de prueba depositados en el contrato.</T></p></li>
+        <li><h3><T>Mirá el resultado</T></h3><p><T>Si una oferta supera a otra, el contrato devuelve el depósito anterior o lo deja disponible para reclamar. Al liquidar, reparte la oferta ganadora entre artista y espacio.</T></p></li>
+      </ol></section>
+      <section className="bg-exito text-papel"><div className="contenedor landing-band"><h2 className="landing-heading"><T>Por qué usamos Stellar</T></h2><div className="space-y-4"><p className="font-serif text-3xl leading-tight"><T>Una oferta queda respaldada desde el momento en que se hace.</T></p><p><T>El contrato de subasta en Stellar guarda el depósito y ejecuta las reglas de devolución y reparto. Desde cada ficha podés abrir el comprobante público y revisar el movimiento.</T></p><p><T>Artemi funciona en Stellar Testnet. Los saldos son de prueba y sirven para ensayar el recorrido completo.</T></p></div></div></section>
+      <section className="contenedor grid gap-10 py-16 md:grid-cols-2">
+        <div><h2 className="landing-heading"><T>Modelo de negocio</T></h2><p className="mt-4"><T>La demo reparte cada liquidación entre la cuenta de artista y la del espacio, según el porcentaje acordado para esa obra. La comisión de Artemi en esta versión es cero.</T></p><p className="mt-3"><T>Para una etapa comercial proponemos que los espacios paguen un servicio por muestra que incluya catálogo, cartelas QR y seguimiento de entregas. Es una propuesta en evaluación, sin tarifa vigente.</T></p></div>
+        <div><h2 className="landing-heading"><T>Modelo legal</T></h2><p className="mt-4"><T>Esta muestra exhibe reproducciones con su autoría, procedencia y condiciones de uso. La demo permite probar ofertas. Los cuadros de los museos permanecen en sus colecciones.</T></p><p className="mt-3"><T>Para una venta real habría que definir quién vende, la autorización para ofrecer y reproducir cada pieza, las condiciones de entrega, los reclamos y el tratamiento de datos de contacto.</T></p><div className="mt-2 flex flex-wrap gap-x-5"><a className="sala-texto" href="https://www.argentina.gob.ar/normativa/nacional/ley-11723-42755/actualizacion"><T>Derechos de autor</T></a><a className="sala-texto" href="https://www.argentina.gob.ar/normativa/nacional/ley-25326-64790/actualizacion"><T>Datos personales</T></a></div></div>
       </section>
     </>
   );

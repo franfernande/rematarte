@@ -1,10 +1,11 @@
+import { T } from "@/components/language-switch";
 import type { ReactNode } from "react";
 
 export type OnboardingStepStatus = "pendiente" | "en curso" | "hecho" | "error";
 
 const statusLabel: Record<OnboardingStepStatus, string> = {
   pendiente: "Pendiente",
-  "en curso": "En curso",
+  "en curso": "Te toca",
   hecho: "Hecho",
   error: "Error",
 };
@@ -23,7 +24,7 @@ const badgeStyles: Record<OnboardingStepStatus, string> = {
   error: "border-malbec/30 bg-malbec/10 text-malbec",
 };
 
-function StepIcon({ number, status, busy }: { number: number; status: OnboardingStepStatus; busy: boolean }) {
+function StepIcon({ number, status, busy }: { number?: number; status: OnboardingStepStatus; busy: boolean }) {
   if (busy) {
     return (
       <span
@@ -54,6 +55,17 @@ function StepIcon({ number, status, busy }: { number: number; status: Onboarding
     );
   }
 
+  if (number === undefined) {
+    return (
+      <span className="mt-1 grid size-8 shrink-0 place-items-center rounded-full border border-linea bg-cal text-piedra" aria-hidden>
+        <svg viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 17V4" />
+          <path d="M6 4.8h8l-2 3.1 2 3.1H6" />
+        </svg>
+      </span>
+    );
+  }
+
   return (
     <span
       className={`mt-1 grid size-8 shrink-0 place-items-center rounded-full border font-serif text-lg italic ${
@@ -73,37 +85,47 @@ export function OnboardingStepCard({
   status,
   busy = false,
   error,
+  notice,
   children,
 }: {
-  number: number;
+  number?: number;
   title: string;
   description: string;
   status: OnboardingStepStatus;
   busy?: boolean;
   error?: string | null;
+  notice?: string | null;
   children?: ReactNode;
 }) {
   return (
     <li
-      className={`rounded-2xl border p-5 transition-colors duration-200 sm:p-6 ${cardStyles[status]}`}
+      className={`rounded-sm border-l-2 border-y p-5 transition-colors duration-200 sm:p-6 ${cardStyles[status]}`}
       aria-current={status === "en curso" ? "step" : undefined}
     >
       <div className="flex gap-4">
         <StepIcon number={number} status={status} busy={busy} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-serif text-2xl leading-tight text-tinta">{title}</h2>
-            <span className={`rounded-full border px-2.5 py-1 text-[0.68rem] font-semibold tracking-[0.14em] uppercase ${badgeStyles[status]}`}>
-              {busy ? "Procesando" : statusLabel[status]}
+            <div>
+              <p className="text-xs font-medium text-piedra"><T>{number === undefined ? "Confirmación" : `Paso ${number} de 4`}</T></p>
+              <h2 className="mt-1 font-serif text-2xl leading-tight text-tinta"><T>{title}</T></h2>
+            </div>
+            <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${badgeStyles[status]}`}>
+              <T>{busy ? "Procesando" : statusLabel[status]}</T>
             </span>
           </div>
-          <p className="mt-2 text-sm leading-relaxed text-tinta-2 sm:text-base">{description}</p>
-          {children && <div className="mt-4">{children}</div>}
-          {error && (
-            <p role="alert" className="mt-4 rounded-xl border border-malbec/25 bg-malbec/10 px-3 py-2 text-sm leading-relaxed text-malbec">
-              {error}
+          <p className="mt-2 text-sm leading-relaxed text-tinta-2 sm:text-base"><T>{description}</T></p>
+          <T>{children && <div className="mt-4">{children}</div>}</T>
+          <T>{notice && !error && (
+            <p className="mt-4 rounded-sm border border-linea bg-cal-2/35 px-3 py-2 text-sm leading-relaxed text-tinta-2">
+              <T>{notice}</T>
             </p>
-          )}
+          )}</T>
+          <T>{error && (
+            <p role="alert" className="mt-4 rounded-xl border border-malbec/25 bg-malbec/10 px-3 py-2 text-sm leading-relaxed text-malbec">
+              <T>{error}</T>
+            </p>
+          )}</T>
         </div>
       </div>
     </li>

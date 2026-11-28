@@ -1,0 +1,221 @@
+{
+  "/@390x844": {
+    "status": 200,
+    "headerScreenshot": "audits\\artemi\\ft1b-header-390x844.png",
+    "topScreenshot": "audits\\artemi\\ft1b-home-top-390x844.png",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "horizontalOverflow": false,
+    "header": {
+      "left": 0,
+      "top": 0,
+      "right": 390,
+      "bottom": 101,
+      "width": 390,
+      "height": 101
+    },
+    "logo": {
+      "left": 20,
+      "top": 14,
+      "right": 199.83,
+      "bottom": 42,
+      "width": 179.83,
+      "height": 28
+    },
+    "image": {
+      "left": 20,
+      "top": 14,
+      "right": 199.83,
+      "bottom": 42,
+      "width": 179.83,
+      "height": 28
+    },
+    "button": {
+      "left": 284,
+      "top": 6,
+      "right": 370,
+      "bottom": 50,
+      "width": 86,
+      "height": 44
+    },
+    "nav": {
+      "left": 20,
+      "top": 50,
+      "right": 370,
+      "bottom": 94,
+      "width": 350,
+      "height": 44
+    },
+    "links": [
+      {
+        "text": "La muestra",
+        "left": 20,
+        "top": 50,
+        "right": 99.97,
+        "bottom": 94,
+        "width": 79.97,
+        "height": 44
+      },
+      {
+        "text": "Artistas",
+        "left": 107.97,
+        "top": 50,
+        "right": 167.08,
+        "bottom": 94,
+        "width": 59.11,
+        "height": 44
+      }
+    ],
+    "naturalWidth": 2036,
+    "naturalHeight": 317,
+    "renderedRatio": 6.422433035714286,
+    "naturalRatio": 6.422712933753943,
+    "twoRows": true
+  },
+  "/@768x1024": {
+    "status": 200,
+    "headerScreenshot": "audits\\artemi\\ft1b-header-768x1024.png",
+    "topScreenshot": "audits\\artemi\\ft1b-home-top-768x1024.png",
+    "scrollWidth": 768,
+    "clientWidth": 768,
+    "horizontalOverflow": false,
+    "header": {
+      "left": 0,
+      "top": 0,
+      "right": 768,
+      "bottom": 65,
+      "width": 768,
+      "height": 65
+    },
+    "logo": {
+      "left": 30.72,
+      "top": 14,
+      "right": 261.92,
+      "bottom": 50,
+      "width": 231.2,
+      "height": 36
+    },
+    "image": {
+      "left": 30.72,
+      "top": 14,
+      "right": 261.92,
+      "bottom": 50,
+      "width": 231.2,
+      "height": 36
+    },
+    "button": {
+      "left": 592.16,
+      "top": 10,
+      "right": 737.28,
+      "bottom": 54,
+      "width": 145.13,
+      "height": 44
+    },
+    "nav": {
+      "left": 339.5,
+      "top": 10,
+      "right": 514.58,
+      "bottom": 54,
+      "width": 175.08,
+      "height": 44
+    },
+    "links": [
+      {
+        "text": "La muestra",
+        "left": 339.5,
+        "top": 10,
+        "right": 431.47,
+        "bottom": 54,
+        "width": 91.97,
+        "height": 44
+      },
+      {
+        "text": "Artistas",
+        "left": 443.47,
+        "top": 10,
+        "right": 514.58,
+        "bottom": 54,
+        "width": 71.11,
+        "height": 44
+      }
+    ],
+    "naturalWidth": 2036,
+    "naturalHeight": 317,
+    "renderedRatio": 6.422309027777778,
+    "naturalRatio": 6.422712933753943,
+    "twoRows": false
+  },
+  "/@1280x800": {
+    "status": 200,
+    "headerScreenshot": "audits\\artemi\\ft1b-header-1280x800.png",
+    "topScreenshot": "audits\\artemi\\ft1b-home-top-1280x800.png",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "horizontalOverflow": false,
+    "header": {
+      "left": 0,
+      "top": 0,
+      "right": 1280,
+      "bottom": 65,
+      "width": 1280,
+      "height": 65
+    },
+    "logo": {
+      "left": 51.19,
+      "top": 12,
+      "right": 308.09,
+      "bottom": 52,
+      "width": 256.91,
+      "height": 40
+    },
+    "image": {
+      "left": 51.19,
+      "top": 12,
+      "right": 308.09,
+      "bottom": 52,
+      "width": 256.91,
+      "height": 40
+    },
+    "button": {
+      "left": 1083.67,
+      "top": 10,
+      "right": 1228.8,
+      "bottom": 54,
+      "width": 145.13,
+      "height": 44
+    },
+    "nav": {
+      "left": 608.34,
+      "top": 10,
+      "right": 783.42,
+      "bottom": 54,
+      "width": 175.08,
+      "height": 44
+    },
+    "links": [
+      {
+        "text": "La muestra",
+        "left": 608.34,
+        "top": 10,
+        "right": 700.31,
+        "bottom": 54,
+        "width": 91.97,
+        "height": 44
+      },
+      {
+        "text": "Artistas",
+        "left": 712.31,
+        "top": 10,
+        "right": 783.42,
+        "bottom": 54,
+        "width": 71.11,
+        "height": 44
+      }
+    ],
+    "naturalWidth": 2036,
+    "naturalHeight": 317,
+    "renderedRatio": 6.42265625,
+    "naturalRatio": 6.422712933753943,
+    "twoRows": false
+  }
+}

@@ -1,8 +1,9 @@
 "use client";
 
+import { T } from "@/components/language-switch";
 import { useEffect, useRef, useState } from "react";
 import type { AuctionPhase } from "@/lib/auction-types";
-import { formatCountdown } from "@/lib/format";
+import { formatCountdownClear } from "./auction-utils";
 
 export function Countdown({ endTime, now, phase }: { endTime: number; now: number; phase: AuctionPhase }) {
   const [extended, setExtended] = useState(false);
@@ -22,15 +23,15 @@ export function Countdown({ endTime, now, phase }: { endTime: number; now: numbe
   }, [endTime]);
 
   if (now <= 0) {
-    return <p className="text-sm font-medium text-piedra">Cierre —</p>;
+    return <p className="text-sm font-medium text-piedra"><T>Cierre —</T></p>;
   }
 
   if (phase === "settled") {
-    return <p className="text-sm font-medium text-piedra">Subasta liquidada</p>;
+    return <p className="text-sm font-medium text-piedra"><T>Subasta liquidada</T></p>;
   }
 
   if (phase === "ended") {
-    return <p className="text-sm font-medium text-piedra">Subasta cerrada</p>;
+    return <p className="text-sm font-medium text-piedra"><T>Subasta cerrada</T></p>;
   }
 
   const closing = phase === "closing";
@@ -40,12 +41,12 @@ export function Countdown({ endTime, now, phase }: { endTime: number; now: numbe
     <div>
       <p className={`flex items-center gap-2 text-sm font-medium ${closing ? "text-ocre" : "text-tinta-2"}`}>
         {closing && <span className="size-2 animate-latido rounded-full bg-ocre" aria-hidden />}
-        Cierra en <span className="font-mono tabular-nums">{formatCountdown(secondsLeft)}</span>
+        <T>Cierra en</T> <span className="font-mono tabular-nums"><T>{formatCountdownClear(secondsLeft)}</T></span>
       </p>
-      {closing && <p className="mt-1 text-xs leading-relaxed text-ocre">Si alguien oferta ahora, el cierre se corre 5 minutos.</p>}
+      {closing && <p className="mt-1 text-xs leading-relaxed text-ocre"><T>Si alguien oferta ahora, el cierre vuelve a 5 minutos desde ese momento.</T></p>}
       {extended && (
         <p aria-live="polite" className="mt-1 animate-aparecer text-xs font-medium text-exito">
-          El cierre se extendió.
+          <T>El cierre se extendió: vuelve a 5 minutos desde la última oferta.</T>
         </p>
       )}
     </div>

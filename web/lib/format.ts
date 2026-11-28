@@ -4,14 +4,23 @@ export const STROOPS_PER_USDC = 10_000_000n;
 // Anti-sniping window from the contract (I1): a bid with less than this left pushes end_time to now + 300.
 export const ANTI_SNIPING_SECONDS = 300;
 
-const usdcFormat = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+const percentFormat = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
 
 export function usdcToNumber(stroops: bigint): number {
   return Number(stroops) / Number(STROOPS_PER_USDC);
 }
 
+function formatWholeEsAr(whole: bigint): string {
+  return whole.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
 export function formatUsdc(stroops: bigint): string {
-  return usdcFormat.format(usdcToNumber(stroops));
+  const negative = stroops < 0n;
+  const absolute = negative ? -stroops : stroops;
+  const whole = absolute / STROOPS_PER_USDC;
+  const fraction = absolute % STROOPS_PER_USDC;
+  const decimals = fraction.toString().padStart(7, "0").replace(/0+$/, "");
+  return `${negative ? "-" : ""}${formatWholeEsAr(whole)}${decimals ? `,${decimals}` : ""}`;
 }
 
 // Accepts "50", "50,5" or "50.5"; returns null for anything that is not a positive amount with up to 7 decimals.
@@ -51,7 +60,7 @@ export function formatCountdown(secondsLeft: number): string {
 }
 
 export function percentFromBps(bps: number): string {
-  return `${usdcFormat.format(bps / 100)} %`;
+  return `${percentFormat.format(bps / 100)} %`;
 }
 
 const EXPLORER = "https://stellar.expert/explorer/testnet";

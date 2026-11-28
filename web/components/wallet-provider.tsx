@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { LoginDialog, type LoginProgressStep, type LoginStage } from "@/components/wallet/login-dialog";
 import { readUsdcBalance } from "@/lib/auction";
@@ -44,6 +45,7 @@ type PrepareAccount = (args: {
 }) => Promise<void>;
 
 const WalletContext = createContext<WalletContextValue | null>(null);
+const LOGIN_TIMEOUT_MS = 60_000;
 
 function isModalClosed(error: unknown): boolean {
   return (
@@ -69,7 +71,16 @@ async function loadPrepareAccount(): Promise<PrepareAccount | null> {
   return (onboarding as { prepareAccount?: PrepareAccount }).prepareAccount ?? null;
 }
 
+function missingStepLabel(step: LoginProgressStep["step"] | null): string {
+  if (step === "fund") return "activar la cuenta";
+  if (step === "trustline") return "habilitar USDC";
+  if (step === "usdc") return "recibir los USDC de prueba";
+  return "completar la preparación automática";
+}
+
 export function WalletProvider({ networkPassphrase, children }: { networkPassphrase: string; children: ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [address, setAddress] = useState<string | null>(null);
   const [walletKind, setWalletKind] = useState<WalletKind | null>(null);
   const [connecting, setConnecting] = useState(false);
@@ -86,8 +97,13 @@ export function WalletProvider({ networkPassphrase, children }: { networkPassphr
   const keypairRef = useRef<Keypair | null>(null);
   const walletKindRef = useRef<WalletKind | null>(null);
   const addressRef = useRef<string | null>(null);
+  const stageRef = useRef<LoginStage>("choice");
   const connectResolverRef = useRef<((value: string | null) => void) | null>(null);
   const connectPromiseRef = useRef<Promise<string | null> | null>(null);
+  const loginGenerationRef = useRef(0);
+  const loginTimeoutRef = useRef<number | null>(null);
+  const pendingLocalWalletRef = useRef<LocalWallet | null>(null);
+  const acknowledgedAddressRef = useRef<string | null>(null);
 
   useEffect(() => {
     walletKindRef.current = walletKind;
@@ -96,6 +112,10 @@ export function WalletProvider({ networkPassphrase, children }: { networkPassphr
   useEffect(() => {
     addressRef.current = address;
   }, [address]);
+
+  useEffect(() => {
+    stageRef.current = stage;
+  }, [stage]);
 
   useEffect(() => {
     const restore = window.setTimeout(() => {
@@ -153,6 +173,23 @@ export function WalletProvider({ networkPassphrase, children }: { networkPassphr
     };
   }, [networkPassphrase]);
 
+  const clearLoginTimeout = useCallback(() => {
+    if (loginTimeoutRef.current !== null) {
+      window.clearTimeout(loginTimeoutRef.current);
+      loginTimeoutRef.current = null;
+    }
+  }, []);
+
+  const discardPendingLocalWallet = useCallback(() => {
+    const pending = pendingLocalWalletRef.current;
+    if (!pending) return;
+    pendingLocalWalletRef.current = null;
+    if (keypairRef.current === pending.keypair) keypairRef.current = null;
+    clearStoredWalletSession();
+    setAddress(null);
+    setWalletKind(null);
+  }, []);
+
   const resolveConnect = useCallback((value: string | null) => {
     const resolve = connectResolverRef.current;
     connectResolverRef.current = null;
@@ -171,9 +208,11 @@ export function WalletProvider({ networkPassphrase, children }: { networkPassphr
 
   const connect = useCallback(() => {
     if (connectPromiseRef.current) return connectPromiseRef.current;
-    if (addressRef.current && keypairRef.current) return Promise.resolve(addressRef.current);
+    if (addressRef.current) return Promise.resolve(addressRef.current);
     resetDialog();
     setForceDeviceFallback(false);
+    acknowledgedAddressRef.current = null;
+    pendingLocalWalletRef.current = null;
     setDialogOpen(true);
     setConnecting(true);
     const promise = new Promise<string | null>((resolve) => {
@@ -184,12 +223,64 @@ export function WalletProvider({ networkPassphrase, children }: { networkPassphr
   }, [resetDialog]);
 
   const closeDialog = useCallback(() => {
-    resolveConnect(null);
+    const currentStage = stageRef.current;
+    clearLoginTimeout();
+    loginGenerationRef.current += 1;
+    if (currentStage !== "success" && currentStage !== "partial") discardPendingLocalWallet();
+    const acknowledged = currentStage === "success" ? acknowledgedAddressRef.current : null;
+    acknowledgedAddressRef.current = null;
+    pendingLocalWalletRef.current = null;
+    resolveConnect(acknowledged);
     setDialogOpen(false);
-  }, [resolveConnect]);
+  }, [clearLoginTimeout, discardPendingLocalWallet, resolveConnect]);
+
+  const enterSample = useCallback(() => {
+    const shouldNavigate = pathname !== "/";
+    closeDialog();
+    if (shouldNavigate) router.push("/#muestra");
+  }, [closeDialog, pathname, router]);
+
+  const completeOnboarding = useCallback(() => {
+    closeDialog();
+    router.push("/empezar");
+  }, [closeDialog, router]);
+
+  const armLoginTimeout = useCallback(
+    (generation: number) => {
+      clearLoginTimeout();
+      loginTimeoutRef.current = window.setTimeout(() => {
+        if (loginGenerationRef.current !== generation) return;
+        if (stageRef.current !== "working" && stageRef.current !== "preparing") return;
+        loginGenerationRef.current += 1;
+        acknowledgedAddressRef.current = null;
+        discardPendingLocalWallet();
+        setDialogMessage(null);
+        setDialogError("La red está tardando más de lo normal. No vamos a seguir esperando esta operación; podés reintentarla.");
+        setStage("error");
+      }, LOGIN_TIMEOUT_MS);
+    },
+    [clearLoginTimeout, discardPendingLocalWallet],
+  );
+
+  const beginAttempt = useCallback(
+    (action: LoginRetryAction, message: string): number => {
+      retryActionRef.current = action;
+      loginGenerationRef.current += 1;
+      const generation = loginGenerationRef.current;
+      setStage("working");
+      setDialogError(null);
+      setDialogMessage(message);
+      if (action !== "external") armLoginTimeout(generation);
+      return generation;
+    },
+    [armLoginTimeout],
+  );
+
+  const attemptIsCurrent = useCallback((generation: number) => loginGenerationRef.current === generation, []);
 
   const adoptLocalWallet = useCallback((wallet: LocalWallet) => {
     keypairRef.current = wallet.keypair;
+    pendingLocalWalletRef.current = wallet;
     const publicKey = wallet.keypair.publicKey();
     setAddress(publicKey);
     setWalletKind(wallet.kind);
@@ -197,7 +288,12 @@ export function WalletProvider({ networkPassphrase, children }: { networkPassphr
   }, []);
 
   const finishLocalLogin = useCallback(
-    async (wallet: LocalWallet) => {
+    async (wallet: LocalWallet, generation: number) => {
+      if (!attemptIsCurrent(generation)) {
+        clearStoredWalletSession();
+        return;
+      }
+
       const publicKey = adoptLocalWallet(wallet);
       setStage("preparing");
       setDialogMessage("Preparando tu cuenta…");
@@ -206,7 +302,8 @@ export function WalletProvider({ networkPassphrase, children }: { networkPassphr
       const localSignTransaction: SignTransaction = async (xdr, opts) =>
         signWithLocalKeypair(wallet.keypair, xdr, networkPassphrase, opts);
 
-      let finalMessage = "Tu cuenta quedó lista para ofertar.";
+      let failedStep: LoginProgressStep["step"] | null = null;
+      let preparationError: string | null = null;
       try {
         const prepareAccount = await loadPrepareAccount();
         if (prepareAccount) {
@@ -214,15 +311,19 @@ export function WalletProvider({ networkPassphrase, children }: { networkPassphr
             address: publicKey,
             signTransaction: localSignTransaction,
             onStep: (event) => {
-              setProgress((current) => upsertProgress(current, [event]));
+              if (event.status === "error") failedStep = event.step;
+              if (attemptIsCurrent(generation)) setProgress((current) => upsertProgress(current, [event]));
             },
           });
         } else {
-          finalMessage = "Tu cuenta fue creada. La preparación automática todavía está pendiente de otro módulo; si hace falta, completala desde “Empezar”.";
+          preparationError = "La preparación automática todavía no está disponible.";
         }
       } catch (error) {
-        finalMessage = `Tu cuenta fue creada, pero no pudimos completar la preparación automática. ${error instanceof Error ? error.message : "Podés intentarlo desde “Empezar”."}`;
+        preparationError = error instanceof Error ? error.message : "No pudimos preparar la cuenta de prueba.";
       }
+
+      if (!attemptIsCurrent(generation)) return;
+      clearLoginTimeout();
 
       let latestBalance: bigint | null = null;
       try {
@@ -230,83 +331,122 @@ export function WalletProvider({ networkPassphrase, children }: { networkPassphr
       } catch {
         latestBalance = null;
       }
+      if (!attemptIsCurrent(generation)) return;
+
       setBalance(latestBalance);
-      setDialogMessage(finalMessage);
-      setStage("success");
-      resolveConnect(publicKey);
+      acknowledgedAddressRef.current = publicKey;
+      if (preparationError) {
+        setDialogMessage(`Entraste, pero falta ${missingStepLabel(failedStep)}. Podés completarlo desde Empezar.`);
+        setStage("partial");
+      } else {
+        setDialogMessage("Tu cuenta quedó lista para ofertar.");
+        setStage("success");
+      }
     },
-    [adoptLocalWallet, networkPassphrase, resolveConnect],
+    [adoptLocalWallet, attemptIsCurrent, clearLoginTimeout, networkPassphrase],
   );
 
-  const handleCreatePasskey = useCallback(async () => {
-    retryActionRef.current = "create-passkey";
-    setStage("working");
+  const finishPasskeyCancellation = useCallback(() => {
+    clearLoginTimeout();
     setDialogError(null);
-    setDialogMessage("Esperando tu huella, Face ID o PIN…");
+    setDialogMessage("Cancelaste la huella o el PIN. Seguís sin entrar; podés probar otra vez o elegir otra opción.");
+    setStage("choice");
+  }, [clearLoginTimeout]);
+
+  const handleCreatePasskey = useCallback(async () => {
+    const generation = beginAttempt("create-passkey", "Esperando tu huella, Face ID o PIN…");
     try {
       const wallet = await createPasskeyWallet();
-      await finishLocalLogin(wallet);
+      if (!attemptIsCurrent(generation)) {
+        clearStoredWalletSession();
+        return;
+      }
+      await finishLocalLogin(wallet, generation);
     } catch (error) {
+      if (!attemptIsCurrent(generation)) return;
+      if (error instanceof PasskeyWalletError && error.code === "cancelled") {
+        finishPasskeyCancellation();
+        return;
+      }
       if (error instanceof PasskeyWalletError && (error.code === "prf-unavailable" || error.code === "unsupported")) {
         setForceDeviceFallback(true);
       }
+      clearLoginTimeout();
       setDialogError(passkeyErrorMessage(error));
       setStage("error");
     }
-  }, [finishLocalLogin]);
+  }, [attemptIsCurrent, beginAttempt, clearLoginTimeout, finishLocalLogin, finishPasskeyCancellation]);
 
   const handleLoginPasskey = useCallback(async () => {
-    retryActionRef.current = "login-passkey";
-    setStage("working");
-    setDialogError(null);
-    setDialogMessage("Buscando tu cuenta con la passkey guardada…");
+    const generation = beginAttempt("login-passkey", "Buscando tu cuenta con la passkey guardada…");
     try {
       const wallet = await loginPasskeyWallet();
-      await finishLocalLogin(wallet);
+      if (!attemptIsCurrent(generation)) {
+        clearStoredWalletSession();
+        return;
+      }
+      await finishLocalLogin(wallet, generation);
     } catch (error) {
+      if (!attemptIsCurrent(generation)) return;
+      if (error instanceof PasskeyWalletError && error.code === "cancelled") {
+        finishPasskeyCancellation();
+        return;
+      }
       if (error instanceof PasskeyWalletError && error.code === "unsupported") setForceDeviceFallback(true);
+      clearLoginTimeout();
       setDialogError(passkeyErrorMessage(error));
       setStage("error");
     }
-  }, [finishLocalLogin]);
+  }, [attemptIsCurrent, beginAttempt, clearLoginTimeout, finishLocalLogin, finishPasskeyCancellation]);
 
   const handleCreateDevice = useCallback(async () => {
-    retryActionRef.current = "create-device";
-    setStage("working");
-    setDialogError(null);
-    setDialogMessage("Creando una cuenta en este dispositivo…");
+    const generation = beginAttempt("create-device", "Creando una cuenta en este dispositivo…");
     try {
       const wallet = createDeviceWallet();
-      await finishLocalLogin(wallet);
+      if (!attemptIsCurrent(generation)) {
+        clearStoredWalletSession();
+        return;
+      }
+      await finishLocalLogin(wallet, generation);
     } catch (error) {
+      if (!attemptIsCurrent(generation)) return;
+      clearLoginTimeout();
       setDialogError(error instanceof Error ? error.message : "No pudimos crear la cuenta en este dispositivo.");
       setStage("error");
     }
-  }, [finishLocalLogin]);
+  }, [attemptIsCurrent, beginAttempt, clearLoginTimeout, finishLocalLogin]);
 
   const handleExternal = useCallback(async () => {
-    retryActionRef.current = "external";
-    setStage("working");
-    setDialogError(null);
-    setDialogMessage("Abriendo Albedo o Freighter…");
+    const generation = beginAttempt("external", "Abriendo Albedo o Varial…");
     try {
       const { kit } = await loadWalletKit(networkPassphrase);
+      if (!attemptIsCurrent(generation)) return;
+      setDialogOpen(false);
       const { address: connected } = await kit.authModal();
+      if (!attemptIsCurrent(generation)) {
+        await kit.disconnect().catch(() => undefined);
+        return;
+      }
+      clearLoginTimeout();
       keypairRef.current = null;
       setAddress(connected);
       setWalletKind("external");
+      acknowledgedAddressRef.current = null;
       resolveConnect(connected);
-      setDialogOpen(false);
     } catch (error) {
+      if (!attemptIsCurrent(generation)) return;
+      clearLoginTimeout();
+      setDialogOpen(true);
       if (isModalClosed(error)) {
+        setDialogError(null);
+        setDialogMessage("Cerraste la wallet externa. Seguís sin entrar; podés elegir otra opción.");
         setStage("choice");
-        setDialogMessage(null);
         return;
       }
       setDialogError(error instanceof Error ? error.message : "No pudimos conectar la wallet externa.");
       setStage("error");
     }
-  }, [networkPassphrase, resolveConnect]);
+  }, [attemptIsCurrent, beginAttempt, clearLoginTimeout, networkPassphrase, resolveConnect]);
 
   const retryLoginAction = useCallback(() => {
     const action = retryActionRef.current;
@@ -383,6 +523,8 @@ export function WalletProvider({ networkPassphrase, children }: { networkPassphr
         onLoginPasskey={() => void handleLoginPasskey()}
         onCreateDevice={() => void handleCreateDevice()}
         onExternal={() => void handleExternal()}
+        onEnterSample={enterSample}
+        onCompleteOnboarding={completeOnboarding}
       />
     </WalletContext.Provider>
   );

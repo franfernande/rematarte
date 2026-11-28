@@ -1,8 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { obras } from "./helpers";
 
-test("la portada muestra todas las obras y lleva a su ficha", async ({ page }) => {
+test("desde la portada se recorren la muestra y las fichas", async ({ page }) => {
   await page.goto("/");
+  await page.locator("main a[href='/muestra']").first().click();
+  await expect(page).toHaveURL(/\/muestra$/);
   for (const obra of obras) {
     await expect(page.locator(`a[href="/obra/${obra.slug}"]`).first()).toBeVisible();
   }

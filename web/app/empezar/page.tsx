@@ -3,7 +3,7 @@ import { OnboardingStepper } from "@/components/onboarding/onboarding-stepper";
 
 export const metadata: Metadata = {
   title: "Empezar",
-  description: "Conectá una wallet, activá tu cuenta de Stellar Testnet y recibí USDC de prueba para ofertar en Artemi.",
+  description: "Conectá una wallet, activá tu cuenta en la red de prueba y recibí saldo de prueba para ofertar en Artemi.",
 };
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
