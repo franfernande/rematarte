@@ -9,8 +9,8 @@ export const metadata: Metadata = {
   description: "Conocé a las artistas de Artemi y las obras que subastan en vivo durante la muestra.",
 };
 
-export default function ArtistasPage() {
-  const artistas = getArtistas();
+export default async function ArtistasPage() {
+  const artistas = await getArtistas();
 
   return (
     <div className="contenedor pb-16 pt-8 sm:pt-10">

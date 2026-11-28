@@ -1,59 +1,84 @@
 import { T } from "@/components/language-switch";
+
+export type ContactFields = { nombre: string; apellido: string; telefono: string };
+
 type ContactFormProps = {
   id: string;
-  nombre: string;
-  telefono: string;
+  values: ContactFields;
   error: string | null;
   disabled?: boolean;
-  onNombreChange: (value: string) => void;
-  onTelefonoChange: (value: string) => void;
+  onChange: (field: keyof ContactFields, value: string) => void;
 };
 
-export function ContactForm({ id, nombre, telefono, error, disabled = false, onNombreChange, onTelefonoChange }: ContactFormProps) {
+const inputClass =
+  "mt-1 min-h-12 w-full rounded-sm border border-linea bg-cal px-3 text-base text-tinta outline-none transition-colors focus:border-malbec disabled:opacity-60";
+
+export function ContactForm({ id, values, error, disabled = false, onChange }: ContactFormProps) {
   return (
     <section aria-labelledby={`${id}-titulo`} className="mt-4 animate-aparecer border-l-2 border-exito bg-cal px-4 py-5">
-      <p className="etiqueta !text-exito"><T>Contacto para la entrega</T></p>
+      <p className="etiqueta !text-exito"><T>Antes de tu primera oferta</T></p>
       <h3 id={`${id}-titulo`} className="mt-2 font-serif text-2xl leading-tight text-tinta">
-        <T>¿A quién avisamos si ganás?</T>
+        <T>¿Cómo te contactamos si ganás?</T>
       </h3>
       <p className="mt-2 text-sm leading-relaxed text-tinta-2">
-        <T>Si ganás, el espacio te escribe a este número para coordinar la entrega de la obra. No se publica en ningún lado.</T>
+        <T>El espacio usa estos datos solo para coordinar la entrega de la obra. No se publican. Se piden una sola vez por wallet.</T>
       </p>
-      <div className="mt-4 grid gap-3">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <label className="text-sm font-medium text-tinta">
-          <T>Nombre y apellido</T>
+          <T>Nombre</T>
           <input
-            value={nombre}
-            onChange={(event) => onNombreChange(event.target.value)}
+            value={values.nombre}
+            onChange={(event) => onChange("nombre", event.target.value)}
             type="text"
-            autoComplete="name"
+            name="given-name"
+            autoComplete="given-name"
             minLength={2}
-            maxLength={80}
+            maxLength={60}
             required
             disabled={disabled}
-            className="mt-1 min-h-12 w-full rounded-sm border border-linea bg-cal px-3 text-base text-tinta outline-none transition-colors focus:border-malbec disabled:opacity-60"
+            className={inputClass}
           />
         </label>
         <label className="text-sm font-medium text-tinta">
-          <T>Teléfono</T>
+          <T>Apellido</T>
           <input
-            value={telefono}
-            onChange={(event) => onTelefonoChange(event.target.value)}
+            value={values.apellido}
+            onChange={(event) => onChange("apellido", event.target.value)}
+            type="text"
+            name="family-name"
+            autoComplete="family-name"
+            minLength={2}
+            maxLength={60}
+            required
+            disabled={disabled}
+            className={inputClass}
+          />
+        </label>
+        <label className="text-sm font-medium text-tinta sm:col-span-2">
+          <T>Teléfono (con código de área)</T>
+          <input
+            value={values.telefono}
+            onChange={(event) => onChange("telefono", event.target.value)}
             type="tel"
+            name="tel"
             autoComplete="tel"
             inputMode="tel"
             placeholder="+54 9 261 123-4567"
+            maxLength={32}
             required
             disabled={disabled}
-            className="mt-1 min-h-12 w-full rounded-sm border border-linea bg-cal px-3 text-base text-tinta outline-none transition-colors focus:border-malbec disabled:opacity-60"
+            className={inputClass}
           />
         </label>
       </div>
-      <T>{error && (
+      <p className="mt-3 text-xs leading-relaxed text-tinta-2">
+        <T>Al guardar, tu wallet firma para confirmar que es tuya. Esa firma no mueve fondos.</T>
+      </p>
+      {error && (
         <p role="alert" className="mt-3 rounded-sm border border-malbec/25 bg-malbec/10 px-3 py-2 text-sm text-malbec">
           <T>{error}</T>
         </p>
-      )}</T>
+      )}
     </section>
   );
 }

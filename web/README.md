@@ -69,6 +69,28 @@ Producción: **https://artemi-arte.vercel.app** (proyecto `artemi` en Vercel, Ro
 
 Los colores y las tipografías son los de la identidad de G3 (`docs/slides/`), definidos como tokens en `app/globals.css` (`cal`, `papel`, `tinta`, `piedra`, `linea`, `malbec`, `ocre`).
 
+## Panel del espacio (`/admin`)
+
+Login con contraseña para quien organiza la muestra. `proxy.ts` manda a `/admin/entrar` a quien no tenga sesión, y las APIs vuelven a chequearla.
+
+- **Sesión**: `ADMIN_PASSWORD` se compara en el servidor. Si coincide, queda una cookie `httpOnly` firmada con HMAC (`ADMIN_SESSION_SECRET`) que dura 12 h (`lib/admin-session.ts`). Hay un freno de 8 intentos cada 15 minutos por IP.
+- **`/admin/cargar`**: foto, ficha y condiciones de la obra. La foto se achica en el navegador (máx. 2000 px, WebP). `POST /api/obras` guarda la imagen, crea la subasta con `create_auction` firmada en el servidor con `STELLAR_ADMIN_SECRET` (identidad `admin` del contrato) y guarda la ficha. La obra aparece en la muestra, en su ficha y en la hoja de QR sin volver a desplegar.
+- **`/admin/ventas`**: quién va ganando cada subasta, quién ganó, y nombre, apellido y teléfono para coordinar la entrega (con link a WhatsApp). Debajo, la lista de todos los postores registrados.
+- `/cargar` y `/ventas` redirigen a las nuevas rutas.
+
+### Registro de postores
+
+Antes de su primera oferta, cada wallet completa nombre, apellido y teléfono (`components/contacto/contact-form.tsx`); sin esos datos no se puede ofertar. Para que nadie pise los datos de otra persona, la wallet firma una transacción que nunca se envía a la red. Lleva una sola operación `manageData` con el hash de los datos y vence a los 5 minutos (`lib/contacto-prueba.ts`). `POST /api/contactos` comprueba esa firma con la clave pública. `GET /api/contactos?address=G…` solo dice si la wallet está registrada; la lista completa exige sesión de admin.
+
+### Almacenamiento
+
+`lib/store.ts` guarda las obras cargadas (`obras/<slug>.json`), sus imágenes (`imagenes/…`, servidas por `/api/imagenes/[archivo]`) y los contactos (`contactos/<G…>.json`):
+
+- **En Vercel**: un store de **Vercel Blob privado** conectado al proyecto (crea `BLOB_READ_WRITE_TOKEN`). Sin ese store, el sitio funciona con `obras.json`, pero no se pueden cargar obras ni registrar postores, así que no se puede ofertar.
+- **En local**: sin token, todo va a `web/.data/`, que git ignora.
+
+Variables (ver `.env.example`): `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`, `STELLAR_ADMIN_SECRET`, `BLOB_READ_WRITE_TOKEN` y, opcionales, `ESPACIO_WALLET` y `ARTISTA_WALLET_DEFAULT`. Se cargan en Vercel con `vercel env add <NOMBRE> production --sensitive`.
+
 ## Wallet
 
 `components/wallet-provider.tsx` expone `useWallet()` con `address`, `walletKind`, `connect`, `disconnect` y `signTransaction`. `connect()` abre el diálogo de login (`components/wallet/login-dialog.tsx`):

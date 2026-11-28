@@ -8,15 +8,15 @@ import { ArtistaRetrato } from "@/components/artistas/artista-marca";
 import { disciplinaDe } from "@/components/artistas/artista-utils";
 import { UpcomingWorkCard } from "@/components/artistas/upcoming-work-card";
 import { ArtistWorkCard } from "@/components/artistas/artist-work-card";
-import { getArtista, getArtistas, getDeploy } from "@/lib/data";
+import { getArtista, getArtistas, getSubastas } from "@/lib/data";
 
-export function generateStaticParams() {
-  return getArtistas().map((artista) => ({ slug: artista.slug }));
+export async function generateStaticParams() {
+  return (await getArtistas()).map((artista) => ({ slug: artista.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/artistas/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const artista = getArtista(slug);
+  const artista = await getArtista(slug);
   if (!artista) return { title: "Artista no encontrada" };
   return {
     title: artista.nombre,
@@ -55,10 +55,10 @@ function ArtistaSkeleton() {
 
 async function FichaArtista({ params }: { params: PageProps<"/artistas/[slug]">["params"] }) {
   const { slug } = await params;
-  const artista = getArtista(slug);
+  const artista = await getArtista(slug);
   if (!artista) notFound();
 
-  const { subastas } = getDeploy();
+  const subastas = await getSubastas();
   const total = artista.obras.length;
 
   return (

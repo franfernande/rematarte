@@ -7,7 +7,7 @@ import { placeBid, readUsdcBalance, toFriendlyError } from "@/lib/auction";
 import type { AuctionState } from "@/lib/auction-types";
 import { ContactoApiError, contactoEstaRegistrado, guardarContacto } from "@/lib/contactos-client";
 import { formatUsdc, minNextBid, parseUsdc } from "@/lib/format";
-import { ContactForm } from "@/components/contacto/contact-form";
+import { ContactForm, type ContactFields } from "@/components/contacto/contact-form";
 import { useWallet } from "@/components/wallet-provider";
 import { stroopsToInput } from "./auction-utils";
 import { idleTransaction, TransactionStatus, type TransactionView } from "./transaction-status";
@@ -51,6 +51,9 @@ function writeContactSession(address: string) {
   }
 }
 
+const NOMBRE = /^[\p{L}\p{M}' .-]{2,60}$/u;
+const emptyContact: ContactFields = { nombre: "", apellido: "", telefono: "" };
+
 function telefonoPareceValido(value: string): boolean {
   if (!/^\+?[\d\s().-]+$/.test(value.trim())) return false;
   const digits = value.replace(/\D/g, "");
@@ -66,10 +69,8 @@ export function BidForm({ auction, titulo, onRefresh }: { auction: AuctionState;
   const [balanceResult, setBalanceResult] = useState<BalanceResult | null>(null);
   const [successfulBid, setSuccessfulBid] = useState<SuccessfulBid | null>(null);
   const [contactStep, setContactStep] = useState<ContactStep | null>(null);
-  const [contactNombre, setContactNombre] = useState("");
-  const [contactTelefono, setContactTelefono] = useState("");
+  const [contact, setContact] = useState<ContactFields>(emptyContact);
   const [contactError, setContactError] = useState<string | null>(null);
-  const [contactNotice, setContactNotice] = useState<string | null>(null);
 
   const input = inputOverride ?? stroopsToInput(minimum);
   const amount = parseUsdc(input);
@@ -147,11 +148,11 @@ export function BidForm({ auction, titulo, onRefresh }: { auction: AuctionState;
       if (registered) writeContactSession(bidder);
       return !registered;
     } catch (cause) {
-      if (cause instanceof ContactoApiError && cause.status === 403) {
-        setContactNotice("El registro de contacto no está disponible en esta versión, pero tu oferta puede continuar.");
-        return false;
-      }
-      throw new Error("No pudimos revisar tus datos de contacto. Revisá tu conexión y probá de nuevo.");
+      throw new Error(
+        cause instanceof ContactoApiError && cause.status === 503
+          ? cause.message
+          : "No pudimos revisar tus datos de contacto. Revisá tu conexión y probá de nuevo.",
+      );
     }
   }
 
@@ -186,14 +187,19 @@ export function BidForm({ auction, titulo, onRefresh }: { auction: AuctionState;
     event.preventDefault();
     if (busy || !contactStep) return;
 
-    const nombre = contactNombre.trim();
-    const telefono = contactTelefono.trim();
-    if (nombre.length < 2 || nombre.length > 80) {
-      setContactError("Ingresá nombre y apellido, entre 2 y 80 caracteres.");
+    const nombre = contact.nombre.trim();
+    const apellido = contact.apellido.trim();
+    const telefono = contact.telefono.trim();
+    if (!NOMBRE.test(nombre)) {
+      setContactError("Ingresá tu nombre (solo letras, entre 2 y 60 caracteres).");
+      return;
+    }
+    if (!NOMBRE.test(apellido)) {
+      setContactError("Ingresá tu apellido (solo letras, entre 2 y 60 caracteres).");
       return;
     }
     if (!telefonoPareceValido(telefono)) {
-      setContactError("Ingresá un teléfono válido en formato internacional.");
+      setContactError("Ingresá un teléfono válido, con código de área (por ejemplo, +54 9 261 123-4567).");
       return;
     }
     if (contactStep.amount < minimum) {
@@ -205,16 +211,16 @@ export function BidForm({ auction, titulo, onRefresh }: { auction: AuctionState;
     setBusy(true);
     setContactError(null);
     try {
-      await guardarContacto({ address: contactStep.address, nombre, telefono });
+      await guardarContacto({ address: contactStep.address, nombre, apellido, telefono }, signTransaction);
       writeContactSession(contactStep.address);
     } catch (cause) {
-      if (cause instanceof ContactoApiError && cause.status === 403) {
-        setContactNotice("El registro de contacto no está disponible en esta versión, pero tu oferta puede continuar.");
-      } else {
-        setContactError(cause instanceof ContactoApiError ? cause.message : "No pudimos guardar tus datos. Probá de nuevo.");
-        setBusy(false);
-        return;
-      }
+      setContactError(
+        cause instanceof ContactoApiError
+          ? cause.message
+          : "No se pudo confirmar la firma de la wallet. Probá de nuevo y aceptá la firma.",
+      );
+      setBusy(false);
+      return;
     }
 
     const pending = contactStep;
@@ -309,18 +315,15 @@ export function BidForm({ auction, titulo, onRefresh }: { auction: AuctionState;
         <T>{address && balance !== undefined && balance !== null && !insufficientBalance && (
           <p className="text-xs text-piedra"><T>Tenés</T> {formatUsdc(balance)} <T>USDC de prueba disponibles.</T></p>
         )}</T>
-        <T>{contactNotice && <p className="rounded-sm border border-ocre/40 bg-ocre/10 px-3 py-2 text-xs text-tinta-2"><T>{contactNotice}</T></p>}</T>
       </div>
 
       {contactStep && (
         <ContactForm
           id={`contacto-oferta-${auction.id}`}
-          nombre={contactNombre}
-          telefono={contactTelefono}
+          values={contact}
           error={contactError}
           disabled={busy}
-          onNombreChange={setContactNombre}
-          onTelefonoChange={setContactTelefono}
+          onChange={(field, value) => setContact((current) => ({ ...current, [field]: value }))}
         />
       )}
 

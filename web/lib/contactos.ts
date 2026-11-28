@@ -1,70 +1,98 @@
 import "server-only";
 
-import fs from "node:fs";
-import path from "node:path";
 import { StrKey } from "@stellar/stellar-sdk";
 import { z } from "zod";
+import { listKeys, readJson, writeJson } from "@/lib/store";
 
-const CONTACTOS_PATH = path.join(process.cwd(), "data", "contactos.json");
+// One JSON per wallet in the private store (lib/store.ts): contactos/<G...>.json.
+// Only the admin can list them (GET /api/contactos).
+
+const PREFIX = "contactos";
+
+const nombreSchema = (campo: string) =>
+  z
+    .string()
+    .trim()
+    .min(2, campo)
+    .max(60, campo)
+    .regex(/^[\p{L}\p{M}' .-]+$/u, campo);
 
 const telefonoSchema = z
   .string()
   .trim()
-  .min(8)
-  .max(32)
-  .regex(/^\+?[\d\s().-]+$/, "Ingresá un teléfono válido")
-  .transform((value) => {
-    const digits = value.replace(/\D/g, "");
-    return `${value.trim().startsWith("+") ? "+" : ""}${digits}`;
-  })
+  .max(32, "telefono")
+  .regex(/^\+?[\d\s().-]+$/, "telefono")
   .refine((value) => {
-    const digits = value.replace(/^\+/, "");
+    const digits = value.replace(/\D/g, "");
     return digits.length >= 8 && digits.length <= 15;
-  }, "Ingresá un teléfono válido");
+  }, "telefono");
 
 export const contactoBodySchema = z.object({
-  address: z.string().trim().refine((value) => StrKey.isValidEd25519PublicKey(value), "La dirección no es válida"),
-  nombre: z.string().trim().min(2).max(80),
+  address: z.string().trim().refine((value) => StrKey.isValidEd25519PublicKey(value), "address"),
+  nombre: nombreSchema("nombre"),
+  apellido: nombreSchema("apellido"),
   telefono: telefonoSchema,
+  prueba: z.string().min(1, "prueba").max(4000, "prueba"),
 });
 
 const contactoGuardadoSchema = z.object({
   address: z.string(),
   nombre: z.string(),
+  apellido: z.string().default(""),
   telefono: z.string(),
+  creado: z.iso.datetime().optional(),
   actualizado: z.iso.datetime(),
 });
 
-const contactosSchema = z.array(contactoGuardadoSchema);
-
-export type ContactoInput = z.infer<typeof contactoBodySchema>;
 export type ContactoGuardado = z.infer<typeof contactoGuardadoSchema>;
 
-export function readContactos(): ContactoGuardado[] {
-  if (!fs.existsSync(CONTACTOS_PATH)) return [];
-  const parsed = contactosSchema.safeParse(JSON.parse(fs.readFileSync(CONTACTOS_PATH, "utf-8")));
-  if (!parsed.success) throw new Error("contactos.json no tiene un formato válido");
-  return parsed.data;
+export function normalizarTelefono(value: string): string {
+  const trimmed = value.trim();
+  return `${trimmed.startsWith("+") ? "+" : ""}${trimmed.replace(/\D/g, "")}`;
 }
 
-function writeContactos(contactos: ContactoGuardado[]) {
-  fs.mkdirSync(path.dirname(CONTACTOS_PATH), { recursive: true });
-  const temporary = `${CONTACTOS_PATH}.${process.pid}.tmp`;
-  fs.writeFileSync(temporary, `${JSON.stringify(contactos, null, 2)}\n`, "utf-8");
-  fs.renameSync(temporary, CONTACTOS_PATH);
+function key(address: string): string {
+  return `${PREFIX}/${address}.json`;
 }
 
-export function upsertContacto(input: ContactoInput): ContactoGuardado {
-  const contactos = readContactos();
-  const actualizado = new Date().toISOString();
-  const contacto: ContactoGuardado = { ...input, actualizado };
-  const index = contactos.findIndex((item) => item.address === input.address);
-  if (index === -1) contactos.push(contacto);
-  else contactos[index] = contacto;
-  writeContactos(contactos);
+export async function readContacto(address: string): Promise<ContactoGuardado | null> {
+  const parsed = contactoGuardadoSchema.safeParse(await readJson(key(address)));
+  return parsed.success ? parsed.data : null;
+}
+
+export async function contactoRegistrado(address: string): Promise<boolean> {
+  return (await readContacto(address)) !== null;
+}
+
+export async function readContactos(): Promise<ContactoGuardado[]> {
+  const keys = (await listKeys(`${PREFIX}/`)).filter((item) => item.endsWith(".json"));
+  const contactos = await Promise.all(
+    keys.map(async (item) => {
+      const parsed = contactoGuardadoSchema.safeParse(await readJson(item));
+      return parsed.success ? parsed.data : null;
+    }),
+  );
+  return contactos
+    .filter((contacto): contacto is ContactoGuardado => contacto !== null)
+    .sort((a, b) => b.actualizado.localeCompare(a.actualizado));
+}
+
+export async function upsertContacto(input: {
+  address: string;
+  nombre: string;
+  apellido: string;
+  telefono: string;
+}): Promise<ContactoGuardado> {
+  const previous = await readContacto(input.address);
+  const now = new Date().toISOString();
+  const contacto: ContactoGuardado = {
+    address: input.address,
+    nombre: input.nombre,
+    apellido: input.apellido,
+    telefono: normalizarTelefono(input.telefono),
+    creado: previous?.creado ?? previous?.actualizado ?? now,
+    actualizado: now,
+  };
+  await writeJson(key(input.address), contacto);
   return contacto;
-}
-
-export function contactoRegistrado(address: string): boolean {
-  return readContactos().some((contacto) => contacto.address === address);
 }

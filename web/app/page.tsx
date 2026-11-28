@@ -8,8 +8,8 @@ import { Agenda } from "@/components/agenda";
 import { getArtistas } from "@/lib/data";
 import mantones from "@/public/muestra/fader/mantones.webp";
 
-export default function InicioPage() {
-  const artistas = getArtistas();
+export default async function InicioPage() {
+  const artistas = await getArtistas();
   return (
     <>
       <section className="sala-portada portada-vinedo" aria-labelledby="inicio-titulo">

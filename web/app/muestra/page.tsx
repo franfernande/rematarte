@@ -7,7 +7,7 @@ import { AuctionBadge } from "@/components/auction/auction-badge";
 import { ObraArte } from "@/components/obra-arte";
 import { ObraQr, ObraQrFallback } from "@/components/qr/obra-qr";
 import { UpcomingWorkCard } from "@/components/artistas/upcoming-work-card";
-import { getArtistas, getArtistaSlugForObra, getDeploy, getObras } from "@/lib/data";
+import { getArtistas, getArtistaSlugForObra, getObras, getSubastas } from "@/lib/data";
 
 const pasos = [
   {
@@ -58,8 +58,7 @@ function PortadaFallback() {
 async function obtenerPortada() {
   await connection();
   const ahora = Date.now();
-  const obras = getObras();
-  const { subastas } = getDeploy();
+  const [obras, subastas] = await Promise.all([getObras(), getSubastas()]);
   const destacada =
     obras.find((obra) => obra.reproduccion?.inventario === "1664") ??
     obras.find((obra) => subastas[obra.slug] !== undefined && new Date(obra.cierre).getTime() > ahora) ?? obras[0];
@@ -70,7 +69,7 @@ async function obtenerPortada() {
 async function Portada() {
   const { obras, subastas, destacada } = await obtenerPortada();
 
-  const proximas = getArtistas().flatMap(artista =>
+  const proximas = (await getArtistas()).flatMap(artista =>
     (artista.proximas ?? []).map(obra => ({ artista: artista.nombre, obra })),
   );
 
@@ -87,7 +86,7 @@ async function Portada() {
   }
 
   const resto = obras.filter((obra) => obra.slug !== destacada.slug);
-  const artistaDestacadaSlug = getArtistaSlugForObra(destacada);
+  const artistaDestacadaSlug = await getArtistaSlugForObra(destacada);
   const auctionDestacada = subastas[destacada.slug];
 
   return (

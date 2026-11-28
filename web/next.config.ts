@@ -9,6 +9,13 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/**": ["data/**/*.json"],
   },
+  // The admin pages moved under /admin (protected by proxy.ts).
+  async redirects() {
+    return [
+      { source: "/cargar", destination: "/admin/cargar", permanent: false },
+      { source: "/ventas", destination: "/admin/ventas", permanent: false },
+    ];
+  },
   turbopack: {
     rules: {
       "*.css": {

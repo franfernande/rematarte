@@ -1,3 +1,6 @@
+import { buildContactoProof, type ContactoDatos } from "@/lib/contacto-prueba";
+import { NETWORK_PASSPHRASE } from "@/lib/stellar";
+
 export class ContactoApiError extends Error {
   status: number;
 
@@ -6,6 +9,11 @@ export class ContactoApiError extends Error {
     this.status = status;
   }
 }
+
+type SignTransaction = (
+  xdr: string,
+  opts?: { networkPassphrase?: string; address?: string },
+) => Promise<{ signedTxXdr: string }>;
 
 async function readError(response: Response, fallback: string): Promise<never> {
   let message = fallback;
@@ -25,11 +33,14 @@ export async function contactoEstaRegistrado(address: string): Promise<boolean> 
   return body.registrado === true;
 }
 
-export async function guardarContacto(input: { address: string; nombre: string; telefono: string }): Promise<void> {
+// Signs the proof with the wallet (nothing is sent to the network) and saves the contact.
+export async function guardarContacto(datos: ContactoDatos, signTransaction: SignTransaction): Promise<void> {
+  const xdr = buildContactoProof(datos, NETWORK_PASSPHRASE);
+  const { signedTxXdr } = await signTransaction(xdr, { networkPassphrase: NETWORK_PASSPHRASE, address: datos.address });
   const response = await fetch("/api/contactos", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify(input),
+    body: JSON.stringify({ ...datos, prueba: signedTxXdr }),
   });
   if (!response.ok) return readError(response, "No pudimos guardar tus datos. Probá de nuevo.");
 }

@@ -93,6 +93,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               </div>
               <div className="flex flex-col gap-1 sm:items-end">
                 <span className="etiqueta"><T>Stellar Testnet · USDC de prueba</T></span>
+                <Link href="/admin" className="text-xs text-tinta-2 underline decoration-tinta/30 underline-offset-4 hover:text-malbec">
+                  <T>Acceso del espacio</T>
+                </Link>
                 <a
                   href={accountUrl(auctionContractId)}
                   target="_blank"

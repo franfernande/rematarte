@@ -37,7 +37,7 @@ function isLocalUrl(base: string): boolean {
 
 async function PrintableQrCards() {
   const base = await requestBaseUrl();
-  const obras = getObras();
+  const obras = await getObras();
   const local = isLocalUrl(base);
 
   const cards = await Promise.all(

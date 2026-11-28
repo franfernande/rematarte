@@ -1,155 +1,139 @@
-import fs from "node:fs";
-import path from "node:path";
-import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
+import { StrKey } from "@stellar/stellar-sdk";
 import { z } from "zod";
-import type { Obra } from "@/lib/data";
-import { readAuction } from "@/lib/auction";
+import { requestIsAdmin } from "@/lib/admin-session";
+import { AdminKeyError, createAuctionAsAdmin } from "@/lib/admin-stellar";
+import { OBRAS_CACHE_TAG, obraSlugTaken, saveObraCargada } from "@/lib/data";
 import { STROOPS_PER_USDC, parseUsdc } from "@/lib/format";
+import { StoreUnavailableError, writeFile } from "@/lib/store";
 
-const obraPayloadSchema = z.object({
-  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  titulo: z.string().min(1),
-  artista: z.string().min(1),
-  tecnica: z.string().min(1),
-  medidas: z.string().min(1),
-  anio: z.coerce.number().int(),
-  descripcion: z.string(),
-  precioMinimoUsdc: z.coerce.number().positive(),
-  incrementoMinimoUsdc: z.coerce.number().positive(),
-  porcentajeArtista: z.coerce.number().min(0).max(100),
-  cierre: z.string(),
-  auctionId: z.coerce.number().int().nonnegative(),
-  artistWallet: z.string(),
-  venueWallet: z.string(),
+// Vercel rejects request bodies over 4.5 MB; the form shrinks photos before sending them.
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+// The contract needs end_time in the future; a minimum margin avoids auctions that close while being created.
+const MIN_CLOSE_SECONDS = 5 * 60;
+
+const wallet = z.string().trim().refine((value) => StrKey.isValidEd25519PublicKey(value), "wallet");
+
+const obraFormSchema = z.object({
+  slug: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "slug").max(80, "slug"),
+  titulo: z.string().trim().min(1, "titulo").max(120, "titulo"),
+  artista: z.string().trim().min(1, "artista").max(80, "artista"),
+  tecnica: z.string().trim().min(1, "tecnica").max(120, "tecnica"),
+  medidas: z.string().trim().min(1, "medidas").max(60, "medidas"),
+  anio: z.coerce.number().int("anio").min(1000, "anio").max(new Date().getFullYear() + 1, "anio"),
+  descripcion: z.string().trim().max(2000, "descripcion"),
+  alt: z.string().trim().max(300, "alt").optional(),
+  precio: z.string().trim(),
+  incremento: z.string().trim(),
+  porcentaje: z.coerce.number().int("porcentaje").min(0, "porcentaje").max(100, "porcentaje"),
+  cierre: z.iso.datetime({ offset: true, message: "cierre" }),
+  artistWallet: wallet,
+  venueWallet: wallet,
 });
 
-const imageExtensions: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
+const FIELD_ERRORS: Record<string, string> = {
+  slug: "El slug va en minúsculas, con guiones y hasta 80 caracteres.",
+  titulo: "Falta el título (hasta 120 caracteres).",
+  artista: "Falta el nombre de la artista.",
+  tecnica: "Falta la técnica.",
+  medidas: "Faltan las medidas.",
+  anio: "El año no es válido.",
+  descripcion: "La descripción puede tener hasta 2000 caracteres.",
+  alt: "La descripción de la imagen puede tener hasta 300 caracteres.",
+  porcentaje: "El porcentaje de la artista es un entero de 0 a 100.",
+  cierre: "La fecha de cierre no es válida.",
+  artistWallet: "La wallet de la artista tiene que ser una dirección G… válida.",
+  venueWallet: "La wallet del espacio tiene que ser una dirección G… válida.",
 };
 
-function atomicWrite(file: string, data: string | Buffer) {
-  const temporary = `${file}.tmp`;
-  fs.writeFileSync(temporary, data);
-  fs.renameSync(temporary, file);
+function error(message: string, status = 400) {
+  return Response.json({ error: message }, { status });
 }
 
-function errorResponse(message: string, status = 400) {
-  return NextResponse.json({ error: message }, { status });
+// Trusts the file bytes, not the type the browser declares.
+function imageKind(bytes: Uint8Array): { ext: string; type: string } | null {
+  const ascii = (start: number, end: number) => String.fromCharCode(...bytes.subarray(start, end));
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return { ext: "jpg", type: "image/jpeg" };
+  if (bytes[0] === 0x89 && ascii(1, 4) === "PNG") return { ext: "png", type: "image/png" };
+  if (ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return { ext: "webp", type: "image/webp" };
+  return null;
 }
 
-function isoWithLocalOffset(value: string): string {
-  const date = new Date(value);
-  const offset = -date.getTimezoneOffset();
-  const sign = Math.sign(offset) < 0 ? "-" : "+";
-  const hours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, "0");
-  const minutes = String(Math.abs(offset) % 60).padStart(2, "0");
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const dd = String(date.getDate()).padStart(2, "0");
-  const hh = String(date.getHours()).padStart(2, "0");
-  const mi = String(date.getMinutes()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}T${hh}:${mi}:00${sign}${hours}:${minutes}`;
-}
-
-function readDeploy(dataDir: string): { subastas?: Record<string, number> } {
-  const deployPath = path.join(dataDir, "deploy.testnet.json");
-  return JSON.parse(fs.readFileSync(deployPath, "utf8")) as { subastas?: Record<string, number> };
-}
-
-function readObras(dataDir: string): { obras: Obra[]; realObrasPath: string } {
-  const realObrasPath = path.join(dataDir, "obras.json");
-  const sourcePath = fs.existsSync(realObrasPath) ? realObrasPath : path.join(dataDir, "mocks", "obras.json");
-  return {
-    obras: JSON.parse(fs.readFileSync(sourcePath, "utf8")) as Obra[],
-    realObrasPath,
-  };
+function usdcToNumber(value: bigint): number {
+  return Number(value) / Number(STROOPS_PER_USDC);
 }
 
 export async function POST(request: Request) {
-  if (process.env.NODE_ENV === "production") {
-    return errorResponse("La carga desde la web solo está disponible en la demo local", 403);
+  if (!(await requestIsAdmin(request))) return error("Tu sesión de admin venció. Volvé a entrar.", 401);
+
+  let form: FormData;
+  try {
+    form = await request.formData();
+  } catch {
+    return error("No pudimos leer el formulario. Si la imagen es muy grande, probá con una más liviana.");
   }
 
+  const parsed = obraFormSchema.safeParse(Object.fromEntries([...form].filter(([, value]) => typeof value === "string")));
+  if (!parsed.success) {
+    const key = parsed.error.issues[0]?.path[0];
+    return error(FIELD_ERRORS[String(key)] ?? "Revisá los datos de la obra.");
+  }
+  const data = parsed.data;
+
+  const minPrice = parseUsdc(data.precio);
+  const minIncrement = parseUsdc(data.incremento);
+  if (!minPrice || !minIncrement) return error("Revisá el precio base y el incremento en USDC (mayores a 0).");
+
+  const endTime = Math.floor(new Date(data.cierre).getTime() / 1000);
+  if (endTime < Math.floor(Date.now() / 1000) + MIN_CLOSE_SECONDS) {
+    return error("El cierre tiene que ser al menos 5 minutos en el futuro.");
+  }
+
+  const image = form.get("imagen");
+  if (!(image instanceof File) || image.size === 0) return error("Falta la imagen de la obra.");
+  if (image.size > MAX_IMAGE_BYTES) return error("La imagen no puede pasar de 4 MB.");
+  const bytes = new Uint8Array(await image.arrayBuffer());
+  const kind = imageKind(bytes);
+  if (!kind) return error("La imagen tiene que ser JPG, PNG o WebP.");
+
   try {
-    const formData = await request.formData();
-    const image = formData.get("imagen");
+    if (await obraSlugTaken(data.slug)) return error("Ya hay una obra con ese slug. Cambiá el título o el slug.", 409);
 
-    if (!(image instanceof File)) return errorResponse("Falta la imagen");
-    if (image.size > 5 * 1024 * 1024) return errorResponse("La imagen no puede pasar de 5 MB");
+    // The image goes first: if it fails, no auction is left without an obra.
+    const imageFile = `${data.slug}-${Date.now().toString(36)}.${kind.ext}`;
+    await writeFile(`imagenes/${imageFile}`, bytes, kind.type);
 
-    const extension = imageExtensions[image.type];
-    if (!extension) return errorResponse("La imagen tiene que ser JPG, PNG o WebP");
-
-    const parsed = obraPayloadSchema.safeParse(Object.fromEntries(formData));
-    if (!parsed.success) return errorResponse("Los datos de la obra no son válidos");
-
-    const payload = parsed.data;
-    if (payload.slug.includes("..") || payload.slug.includes("/")) return errorResponse("Slug inválido");
-
-    const minPrice = parseUsdc(String(formData.get("precio")));
-    const minIncrement = parseUsdc(String(formData.get("incremento")));
-    if (!minPrice || !minIncrement) return errorResponse("Montos inválidos");
-
-    const endTime = Math.floor(new Date(payload.cierre).getTime() / 1000);
-    const artistBps = Math.round(payload.porcentajeArtista * 100);
-    const auction = await readAuction(payload.auctionId);
-    const auctionMatches =
-      auction.artist === payload.artistWallet &&
-      auction.venue === payload.venueWallet &&
-      auction.minPrice === minPrice &&
-      auction.minIncrement === minIncrement &&
-      auction.endTime === endTime &&
-      auction.artistBps === artistBps;
-
-    if (!auctionMatches) {
-      return errorResponse("La subasta on-chain no coincide con los datos de la obra", 409);
-    }
-
-    const root = process.cwd();
-    const dataDir = path.join(root, "data");
-    const deployPath = path.join(dataDir, "deploy.testnet.json");
-    const deploy = readDeploy(dataDir);
-    const auctionAlreadyAssigned = Object.entries(deploy.subastas ?? {}).some(
-      ([slug, auctionId]) => auctionId === payload.auctionId && slug !== payload.slug,
-    );
-
-    if (auctionAlreadyAssigned) {
-      return errorResponse("Esa subasta ya está asignada a otra obra. Elegí una subasta nueva para no mezclar las pujas.", 409);
-    }
-
-    const { obras, realObrasPath } = readObras(dataDir);
-    if (obras.some((obra) => obra.slug === payload.slug)) {
-      return errorResponse("Ya existe una obra con ese slug. Elegí otro nombre o slug.", 409);
-    }
-
-    const imagePath = `/obras/${payload.slug}.${extension}`;
-    obras.push({
-      slug: payload.slug,
-      titulo: payload.titulo,
-      artista: payload.artista,
-      tecnica: payload.tecnica,
-      medidas: payload.medidas,
-      anio: payload.anio,
-      descripcion: payload.descripcion,
-      imagen: imagePath,
-      precioMinimoUsdc: Number(minPrice) / Number(STROOPS_PER_USDC),
-      incrementoMinimoUsdc: Number(minIncrement) / Number(STROOPS_PER_USDC),
-      porcentajeArtista: payload.porcentajeArtista,
-      cierre: isoWithLocalOffset(payload.cierre),
+    const { auctionId, hash } = await createAuctionAsAdmin({
+      artist: data.artistWallet,
+      venue: data.venueWallet,
+      artistBps: data.porcentaje * 100,
+      minPrice,
+      minIncrement,
+      endTime,
     });
 
-    atomicWrite(realObrasPath, `${JSON.stringify(obras, null, 2)}\n`);
-    deploy.subastas = { ...deploy.subastas, [payload.slug]: payload.auctionId };
-    atomicWrite(deployPath, `${JSON.stringify(deploy, null, 2)}\n`);
+    await saveObraCargada({
+      slug: data.slug,
+      titulo: data.titulo,
+      artista: data.artista,
+      tecnica: data.tecnica,
+      medidas: data.medidas,
+      anio: data.anio,
+      descripcion: data.descripcion,
+      imagen: `/api/imagenes/${imageFile}`,
+      ...(data.alt ? { alt: data.alt } : {}),
+      precioMinimoUsdc: usdcToNumber(minPrice),
+      incrementoMinimoUsdc: usdcToNumber(minIncrement),
+      porcentajeArtista: data.porcentaje,
+      cierre: new Date(endTime * 1000).toISOString(),
+      auctionId,
+    });
+    revalidateTag(OBRAS_CACHE_TAG, { expire: 0 });
 
-    const imagesDir = path.join(root, "public", "obras");
-    fs.mkdirSync(imagesDir, { recursive: true });
-    atomicWrite(path.join(imagesDir, `${payload.slug}.${extension}`), Buffer.from(await image.arrayBuffer()));
-
-    return NextResponse.json({ ok: true, slug: payload.slug });
-  } catch (error) {
-    return errorResponse(error instanceof Error ? error.message : "No pudimos guardar la obra", 500);
+    return Response.json({ ok: true, slug: data.slug, auctionId, hash });
+  } catch (cause) {
+    if (cause instanceof StoreUnavailableError || cause instanceof AdminKeyError) return error(cause.message, 503);
+    console.error("[api/obras]", cause);
+    return error(cause instanceof Error ? cause.message : "No pudimos guardar la obra. Probá de nuevo.", 500);
   }
 }

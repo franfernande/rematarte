@@ -6,16 +6,16 @@ import { notFound } from "next/navigation";
 import { AuctionPanel } from "@/components/auction/auction-panel";
 import { ObraArte } from "@/components/obra-arte";
 import { ObraQr, ObraQrFallback } from "@/components/qr/obra-qr";
-import { getArtistaSlugForObra, getDeploy, getObra, getObras } from "@/lib/data";
+import { getArtistaSlugForObra, getDeploy, getObra, getObras, getSubastas } from "@/lib/data";
 import { accountUrl } from "@/lib/format";
 
-export function generateStaticParams() {
-  return getObras().map((obra) => ({ slug: obra.slug }));
+export async function generateStaticParams() {
+  return (await getObras()).map((obra) => ({ slug: obra.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/obra/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const obra = getObra(slug);
+  const obra = await getObra(slug);
   if (!obra) return { title: "Obra no encontrada" };
   return {
     title: obra.titulo,
@@ -46,12 +46,13 @@ function FichaSkeleton() {
 
 async function Ficha({ params }: { params: PageProps<"/obra/[slug]">["params"] }) {
   const { slug } = await params;
-  const obra = getObra(slug);
+  const obra = await getObra(slug);
   if (!obra) notFound();
 
-  const { subastas, auctionContractId } = getDeploy();
+  const { auctionContractId } = getDeploy();
+  const subastas = await getSubastas();
   const auctionId = subastas[obra.slug];
-  const artistaSlug = getArtistaSlugForObra(obra);
+  const artistaSlug = await getArtistaSlugForObra(obra);
 
   return (
     <div className="contenedor pb-8 pt-2 sm:pt-4">

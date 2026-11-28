@@ -1,14 +1,13 @@
 "use client";
 
 import { T, TranslatedAttributes } from "@/components/language-switch";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { useWallet } from "@/components/wallet-provider";
 import { readAuctions } from "@/lib/auction";
 import type { AuctionState } from "@/lib/auction-types";
 import { accountUrl, formatUsdc, shortAddress } from "@/lib/format";
 import type { Obra } from "@/lib/data";
-
-const ADMIN_ADDRESS = "GBT3IVJYJWNZ5QX4TIFUQT5Z4KD4DOJMLWEVX4THRWUYAAKZSBZNKDZY";
 
 const buttonClass =
   "inline-flex min-h-11 items-center justify-center rounded-sm px-5 text-sm font-medium transition-colors";
@@ -18,6 +17,7 @@ const secondaryButtonClass = `${buttonClass} border border-tinta/20 text-tinta h
 type Contacto = {
   address: string;
   nombre: string;
+  apellido: string;
   telefono: string;
   actualizado: string;
 };
@@ -27,23 +27,28 @@ type Props = {
   subastas: Record<string, number>;
 };
 
-function contactKey(address: string): string {
-  return address.trim().toUpperCase();
+type Status = "en vivo" | "cerrada" | "liquidada";
+
+function nombreCompleto(contacto: Contacto): string {
+  return `${contacto.nombre} ${contacto.apellido}`.trim();
 }
 
-function whatsappUrl(contacto: Contacto, titulo: string): string {
+function whatsappUrl(contacto: Contacto, titulo: string, ganada: boolean): string {
   const digits = contacto.telefono.replace(/\D/g, "");
-  const message = `Hola ${contacto.nombre}, te escribimos de Artemi por la obra ${titulo} que ganaste en la subasta.`;
+  const message = ganada
+    ? `Hola ${contacto.nombre}, te escribimos de Artemi por la obra «${titulo}» que ganaste en la subasta. Coordinemos la entrega.`
+    : `Hola ${contacto.nombre}, te escribimos de Artemi por tu oferta por la obra «${titulo}».`;
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
 }
 
-function auctionStatus(auction: AuctionState, nowSeconds: number): "en vivo" | "cerrada" | "liquidada" {
+function auctionStatus(auction: AuctionState, nowSeconds: number): Status {
   if (auction.settled) return "liquidada";
   return nowSeconds >= auction.endTime ? "cerrada" : "en vivo";
 }
 
-function formatClose(endTime: number): string {
-  return new Intl.DateTimeFormat("es-AR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(endTime * 1000));
+function formatDate(value: number | string): string {
+  const date = typeof value === "number" ? new Date(value * 1000) : new Date(value);
+  return new Intl.DateTimeFormat("es-AR", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
 function Skeleton() {
@@ -60,14 +65,43 @@ function Skeleton() {
   );
 }
 
+function ContactoBox({ contacto, address, titulo, ganada }: { contacto?: Contacto; address: string; titulo: string; ganada: boolean }) {
+  if (!contacto) {
+    return (
+      <div className="mt-4 rounded-sm border border-ocre/30 bg-ocre/10 p-4">
+        <p className="font-medium text-tinta"><T>Sin datos de contacto</T></p>
+        <p className="mt-1 text-sm text-tinta-2"><T>Esta wallet ofertó antes de que se pidieran los datos.</T></p>
+        <a href={accountUrl(address)} target="_blank" rel="noreferrer" className={`${secondaryButtonClass} mt-2 font-mono`}>
+          {shortAddress(address)}
+        </a>
+      </div>
+    );
+  }
+  return (
+    <div className="mt-4 rounded-sm border border-linea bg-cal-2/45 p-4">
+      <p className="font-medium text-tinta">{nombreCompleto(contacto)}</p>
+      <a href={`tel:${contacto.telefono}`} className="mt-1 inline-flex min-h-11 items-center text-malbec underline">
+        {contacto.telefono}
+      </a>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <a href={whatsappUrl(contacto, titulo, ganada)} target="_blank" rel="noreferrer" className={primaryButtonClass}>
+          <T>Escribir por WhatsApp</T>
+        </a>
+        <a href={accountUrl(address)} target="_blank" rel="noreferrer" className={`${secondaryButtonClass} font-mono`}>
+          {shortAddress(address)}
+        </a>
+      </div>
+    </div>
+  );
+}
+
 export function VentasPanel({ obras, subastas }: Props) {
-  const { address, connecting, connect } = useWallet();
+  const router = useRouter();
   const [auctions, setAuctions] = useState<AuctionState[] | null>(null);
   const [contactos, setContactos] = useState<Contacto[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [nowSeconds, setNowSeconds] = useState(0);
-  const isAdmin = address === ADMIN_ADDRESS;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -77,8 +111,12 @@ export function VentasPanel({ obras, subastas }: Props) {
         readAuctions(),
         fetch("/api/contactos", { cache: "no-store" }),
       ]);
-      if (!contactResponse.ok) throw new Error("No pudimos leer los contactos. Probá de nuevo en unos segundos.");
-      const contactData = (await contactResponse.json()) as { contactos?: Contacto[] };
+      if (contactResponse.status === 401) {
+        router.push("/admin/entrar?volver=/admin/ventas");
+        return;
+      }
+      const contactData = (await contactResponse.json().catch(() => ({}))) as { contactos?: Contacto[]; error?: string };
+      if (!contactResponse.ok) throw new Error(contactData.error || "No pudimos leer los contactos. Probá de nuevo.");
       setAuctions(auctionResult);
       setNowSeconds(Math.floor(Date.now() / 1000));
       setContactos(Array.isArray(contactData.contactos) ? contactData.contactos : []);
@@ -87,37 +125,13 @@ export function VentasPanel({ obras, subastas }: Props) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
-    if (!isAdmin) return;
     const timer = window.setTimeout(() => void load(), 0);
     return () => window.clearTimeout(timer);
-  }, [isAdmin, load]);
+  }, [load]);
 
-  if (!address) {
-    return (
-      <section className="cartela panel-sala">
-        <p className="etiqueta"><T>Ventas</T></p>
-        <h1 className="mt-2 font-serif text-4xl leading-tight"><T>Entrá con la wallet del espacio</T></h1>
-        <p className="mt-3 text-tinta-2"><T>Los datos de contacto solo se cargan después de confirmar que sos el espacio.</T></p>
-        <button type="button" className={`${primaryButtonClass} mt-5`} disabled={connecting} onClick={() => void connect()}>
-          <T>{connecting ? "Entrando…" : "Entrar"}</T>
-        </button>
-      </section>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <section className="cartela panel-sala">
-        <h1 className="font-serif text-3xl"><T>Esta página es solo para el espacio</T></h1>
-        <p className="mt-3 text-tinta-2"><T>La wallet conectada no es la administradora del contrato.</T></p>
-      </section>
-    );
-  }
-
-  if (loading && !auctions) return <Skeleton />;
   if (error) {
     return (
       <section className="cartela panel-sala">
@@ -132,81 +146,47 @@ export function VentasPanel({ obras, subastas }: Props) {
   }
   if (!auctions || !contactos) return <Skeleton />;
 
-  const contactByAddress = new Map(contactos.map((contacto) => [contactKey(contacto.address), contacto]));
-  const rows = obras
-    .map((obra) => {
-      const auctionId = subastas[obra.slug];
-      const auction = auctions.find((item) => item.id === auctionId);
-      return auction ? { obra, auction, status: auctionStatus(auction, nowSeconds) } : null;
-    })
-    .filter((row): row is { obra: Obra; auction: AuctionState; status: "en vivo" | "cerrada" | "liquidada" } => row !== null);
+  const contactByAddress = new Map(contactos.map((contacto) => [contacto.address, contacto]));
+  const rows = obras.flatMap((obra) => {
+    const auctionId = subastas[obra.slug];
+    const auction = auctions.find((item) => item.id === auctionId);
+    return auction ? [{ obra, auction, status: auctionStatus(auction, nowSeconds) }] : [];
+  });
   const closed = rows.filter((row) => row.status !== "en vivo" && row.auction.highestBidder);
   const live = rows.filter((row) => row.status === "en vivo");
 
   return (
-    <div className="grid gap-8">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-10">
       <section>
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="etiqueta"><T>Ventas</T></p>
-            <h1 className="mt-2 font-serif text-3xl text-tinta"><T>Entregas para coordinar</T></h1>
-          </div>
+          <h1 className="font-serif text-3xl text-tinta"><T>Entregas para coordinar</T></h1>
           <button type="button" className={secondaryButtonClass} onClick={() => void load()} disabled={loading}>
             <T>{loading ? "Actualizando…" : "Actualizar"}</T>
           </button>
         </div>
 
         {closed.length === 0 ? (
-          <div className="cartela mt-5 p-5 text-tinta-2"><T>Todavía no hay obras cerradas.</T></div>
+          <div className="cartela mt-5 p-5 text-tinta-2"><T>Todavía no hay obras cerradas con ofertas.</T></div>
         ) : (
           <div className="mt-5 grid gap-4">
             {closed.map(({ obra, auction, status }) => {
-              const winner = auction.highestBidder;
-              const contacto = winner ? contactByAddress.get(contactKey(winner)) : undefined;
+              const winner = auction.highestBidder!;
               return (
-                <article key={obra.slug} className="cartela animate-aparecer p-5 motion-reduce:animate-none">
+                <article key={obra.slug} className="cartela p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="etiqueta"><T>{status}</T></p>
-                      <h2 className="mt-1 font-serif text-2xl text-tinta">{obra.titulo}</h2>
+                      <h2 className="mt-1 font-serif text-2xl text-tinta">
+                        <Link href={`/obra/${obra.slug}`} className="hover:text-malbec">{obra.titulo}</Link>
+                      </h2>
                       <p className="mt-1 text-sm text-tinta-2"><T>Artista:</T> {obra.artista}</p>
                     </div>
                     <div className="text-right">
                       <p className="font-serif text-3xl tabular-nums text-tinta">{formatUsdc(auction.highestBid)} USDC</p>
-                      <p className="text-xs text-tinta-2"><T>Cerró:</T> <T>{formatClose(auction.endTime)}</T></p>
+                      <p className="text-xs text-tinta-2"><T>Cerró:</T> {formatDate(auction.endTime)}</p>
                     </div>
                   </div>
-
-                  {winner && contacto ? (
-                    <div className="mt-4 rounded-sm border border-linea bg-cal-2/45 p-4">
-                      <p className="font-medium text-tinta"><T>{contacto.nombre}</T></p>
-                      <a href={`tel:${contacto.telefono}`} className="mt-1 inline-flex min-h-11 items-center text-malbec underline">
-                        <T>{contacto.telefono}</T>
-                      </a>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <a
-                          href={whatsappUrl(contacto, obra.titulo)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className={primaryButtonClass}
-                        >
-                          <T>Escribir por WhatsApp</T>
-                        </a>
-                        <a href={accountUrl(winner)} target="_blank" rel="noreferrer" className={secondaryButtonClass}>
-                          <T>{shortAddress(winner)}</T>
-                        </a>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="mt-4 rounded-sm border border-ocre/30 bg-ocre/10 p-4">
-                      <p className="font-medium text-tinta"><T>Sin datos de contacto</T></p>
-                      <T>{winner && (
-                        <a href={accountUrl(winner)} target="_blank" rel="noreferrer" className={`${secondaryButtonClass} mt-2`}>
-                          <T>{shortAddress(winner)}</T>
-                        </a>
-                      )}</T>
-                    </div>
-                  )}
+                  <ContactoBox contacto={contactByAddress.get(winner)} address={winner} titulo={obra.titulo} ganada />
                 </article>
               );
             })}
@@ -222,19 +202,71 @@ export function VentasPanel({ obras, subastas }: Props) {
           <div className="mt-3 grid gap-3">
             {live.map(({ obra, auction }) => {
               const bidder = auction.highestBidder;
-              const contacto = bidder ? contactByAddress.get(contactKey(bidder)) : undefined;
+              const contacto = bidder ? contactByAddress.get(bidder) : undefined;
               return (
                 <article key={obra.slug} className="cartela flex flex-wrap items-center justify-between gap-3 p-4">
                   <div>
-                    <h3 className="font-medium text-tinta">{obra.titulo}</h3>
+                    <h3 className="font-medium text-tinta">
+                      <Link href={`/obra/${obra.slug}`} className="hover:text-malbec">{obra.titulo}</Link>
+                    </h3>
                     <p className="mt-1 text-sm text-tinta-2">
-                      <T>Va ganando:</T> <T>{contacto ? contacto.nombre : bidder ? shortAddress(bidder) : "sin ofertas"}</T>
+                      <T>Va ganando:</T>{" "}
+                      {contacto ? (
+                        <>
+                          {nombreCompleto(contacto)} ·{" "}
+                          <a href={`tel:${contacto.telefono}`} className="text-malbec underline">{contacto.telefono}</a>
+                        </>
+                      ) : bidder ? (
+                        <span className="font-mono">{shortAddress(bidder)}</span>
+                      ) : (
+                        <T>sin ofertas</T>
+                      )}
                     </p>
+                    <p className="text-xs text-piedra"><T>Cierra:</T> {formatDate(auction.endTime)}</p>
                   </div>
-                  <p className="font-serif text-2xl tabular-nums text-tinta">{formatUsdc(auction.highestBid)} USDC</p>
+                  <p className="font-serif text-2xl tabular-nums text-tinta">
+                    {formatUsdc(bidder ? auction.highestBid : auction.minPrice)} USDC
+                  </p>
                 </article>
               );
             })}
+          </div>
+        )}
+      </section>
+
+      <section>
+        <h2 className="font-serif text-2xl text-tinta"><T>Postores registrados</T></h2>
+        <p className="mt-1 text-sm text-tinta-2"><T>Cada persona completa estos datos antes de su primera oferta.</T></p>
+        {contactos.length === 0 ? (
+          <p className="mt-3 text-tinta-2"><T>Todavía nadie se registró.</T></p>
+        ) : (
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full min-w-[32rem] text-left text-sm">
+              <thead className="border-b border-linea text-tinta-2">
+                <tr>
+                  <th scope="col" className="py-2 pr-3 font-medium"><T>Nombre</T></th>
+                  <th scope="col" className="py-2 pr-3 font-medium"><T>Teléfono</T></th>
+                  <th scope="col" className="py-2 pr-3 font-medium"><T>Wallet</T></th>
+                  <th scope="col" className="py-2 font-medium"><T>Registro</T></th>
+                </tr>
+              </thead>
+              <tbody>
+                {contactos.map((contacto) => (
+                  <tr key={contacto.address} className="border-b border-linea last:border-b-0">
+                    <td className="py-2 pr-3">{nombreCompleto(contacto)}</td>
+                    <td className="py-2 pr-3">
+                      <a href={`tel:${contacto.telefono}`} className="text-malbec underline">{contacto.telefono}</a>
+                    </td>
+                    <td className="py-2 pr-3 font-mono">
+                      <a href={accountUrl(contacto.address)} target="_blank" rel="noreferrer" className="underline">
+                        {shortAddress(contacto.address)}
+                      </a>
+                    </td>
+                    <td className="py-2 text-tinta-2">{formatDate(contacto.actualizado)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </section>

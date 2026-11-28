@@ -3,7 +3,9 @@ import "server-only";
 import fs from "node:fs";
 import path from "node:path";
 import { StrKey } from "@stellar/stellar-sdk";
+import { cacheLife, cacheTag } from "next/cache";
 import { z } from "zod";
+import { listKeys, readJson, writeJson } from "@/lib/store";
 
 // Shapes agreed in docs/plan.md: I2 (obras.json, owned by G3) and I3 (deploy.testnet.json, owned by G1).
 
@@ -39,6 +41,8 @@ const obraSchema = z.object({
   incrementoMinimoUsdc: z.number().positive(),
   porcentajeArtista: z.number().min(0).max(100),
   cierre: z.iso.datetime({ offset: true }),
+  // Only obras uploaded from /admin carry it; the ones in obras.json use deploy.subastas.
+  auctionId: z.number().int().nonnegative().optional(),
 });
 
 const obrasSchema = z
@@ -239,29 +243,92 @@ function getSnapshot(): DataSnapshot {
   return snapshot;
 }
 
-export function getObras(): Obra[] {
-  return getSnapshot().obras.data;
+export function getDeploy(): DeployConfig {
+  return getSnapshot().deploy.data;
 }
 
-export function getObra(slug: string): Obra | undefined {
-  return getSnapshot().obras.data.find((obra) => obra.slug === slug);
+// ---- Obras uploaded from /admin (lib/store.ts, one JSON per obra) ----
+
+export const OBRAS_CACHE_TAG = "obras-cargadas";
+const OBRAS_PREFIX = "obras";
+
+const obraCargadaSchema = obraSchema.extend({ auctionId: z.number().int().nonnegative() });
+export type ObraCargada = z.infer<typeof obraCargadaSchema>;
+
+async function getObrasCargadas(): Promise<ObraCargada[]> {
+  "use cache";
+  cacheTag(OBRAS_CACHE_TAG);
+  cacheLife("hours");
+
+  try {
+    const keys = (await listKeys(`${OBRAS_PREFIX}/`)).filter((key) => key.endsWith(".json"));
+    const obras = await Promise.all(
+      keys.map(async (key) => {
+        const parsed = obraCargadaSchema.safeParse(await readJson(key));
+        if (!parsed.success) console.error(`[obras] ${key} no tiene un formato válido`);
+        return parsed.success ? parsed.data : null;
+      }),
+    );
+    return obras
+      .filter((obra): obra is ObraCargada => obra !== null)
+      .sort((a, b) => a.auctionId - b.auctionId);
+  } catch (error) {
+    // Without storage the site keeps working with obras.json.
+    console.error("[obras] no se pudieron leer las obras cargadas:", error);
+    return [];
+  }
 }
 
-export function getArtistas(): ArtistaConObras[] {
-  return getSnapshot().artistasConObras;
+export async function obraSlugTaken(slug: string): Promise<boolean> {
+  if (getSnapshot().obras.data.some((obra) => obra.slug === slug)) return true;
+  return (await readJson(`${OBRAS_PREFIX}/${slug}.json`)) !== null;
 }
 
-export function getArtista(slug: string): ArtistaConObras | undefined {
-  return getSnapshot().artistasConObras.find((artista) => artista.slug === slug);
+export async function saveObraCargada(obra: ObraCargada): Promise<void> {
+  await writeJson(`${OBRAS_PREFIX}/${obra.slug}.json`, obraCargadaSchema.parse(obra));
 }
 
-export function getArtistaSlugForObra(obra: Obra): string {
-  const match = getSnapshot().artistasConObras.find((artista) =>
+type Catalogo = { obras: Obra[]; artistas: ArtistaConObras[]; subastas: Record<string, number> };
+
+async function getCatalogo(): Promise<Catalogo> {
+  const base = getSnapshot();
+  const slugs = new Set(base.obras.data.map((obra) => obra.slug));
+  const extra = (await getObrasCargadas()).filter((obra) => !slugs.has(obra.slug));
+  if (extra.length === 0) {
+    return { obras: base.obras.data, artistas: base.artistasConObras, subastas: base.deploy.data.subastas };
+  }
+  const obras = [...base.obras.data, ...extra];
+  return {
+    obras,
+    artistas: buildArtistasConObras(base.artistas.data, obras),
+    subastas: { ...base.deploy.data.subastas, ...Object.fromEntries(extra.map((obra) => [obra.slug, obra.auctionId])) },
+  };
+}
+
+export async function getObras(): Promise<Obra[]> {
+  return (await getCatalogo()).obras;
+}
+
+export async function getObra(slug: string): Promise<Obra | undefined> {
+  return (await getCatalogo()).obras.find((obra) => obra.slug === slug);
+}
+
+// slug -> auction id, for obras.json (deploy.testnet.json) and for the obras uploaded from /admin.
+export async function getSubastas(): Promise<Record<string, number>> {
+  return (await getCatalogo()).subastas;
+}
+
+export async function getArtistas(): Promise<ArtistaConObras[]> {
+  return (await getCatalogo()).artistas;
+}
+
+export async function getArtista(slug: string): Promise<ArtistaConObras | undefined> {
+  return (await getCatalogo()).artistas.find((artista) => artista.slug === slug);
+}
+
+export async function getArtistaSlugForObra(obra: Obra): Promise<string> {
+  const match = (await getCatalogo()).artistas.find((artista) =>
     artista.obras.some((candidate) => candidate.slug === obra.slug),
   );
   return match?.slug ?? obra.artistaSlug ?? slugifyArtistaName(obra.artista);
-}
-
-export function getDeploy(): DeployConfig {
-  return getSnapshot().deploy.data;
 }

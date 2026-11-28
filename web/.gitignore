@@ -36,6 +36,9 @@ yarn-error.log*
 .env*
 !.env.example
 
+# runtime data written locally by lib/store.ts (obras, imágenes y contactos)
+/.data/
+
 # vercel
 .vercel
 

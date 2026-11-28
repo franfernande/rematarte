@@ -1,14 +1,11 @@
 "use client";
 
 import { T, TranslatedAttributes } from "@/components/language-switch";
-import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { StrKey } from "@stellar/stellar-sdk";
-import { useWallet } from "@/components/wallet-provider";
-import { idleTransaction, TransactionStatus, type TransactionView } from "@/components/auction/transaction-status";
-import { ADMIN_ADDRESS, createAuction } from "@/lib/create-auction";
-import { parseUsdc } from "@/lib/format";
+import { formatUsdc, parseUsdc, txUrl } from "@/lib/format";
 
 type FormState = {
   titulo: string;
@@ -17,6 +14,7 @@ type FormState = {
   medidas: string;
   anio: string;
   descripcion: string;
+  alt: string;
   precio: string;
   incremento: string;
   porcentaje: string;
@@ -26,293 +24,324 @@ type FormState = {
   slug: string;
 };
 
-type CreatedObra = {
-  slug: string;
-  auctionId: number;
-};
+type Created = { slug: string; auctionId: number; hash: string; titulo: string };
+type FieldKey = keyof FormState;
 
 const inputClass =
-  "mt-1 min-h-11 w-full rounded-sm border border-linea bg-papel px-3 text-tinta outline-none transition-colors " +
+  "mt-1 min-h-11 w-full rounded-sm border border-linea bg-papel px-3 text-base text-tinta outline-none transition-colors " +
   "placeholder:text-piedra focus:border-malbec disabled:opacity-60";
-const buttonClass =
-  "min-h-11 rounded-sm px-5 font-medium transition-colors disabled:opacity-60";
 const secondaryLinkClass =
   "inline-flex min-h-11 items-center justify-center rounded-full border border-tinta/20 px-5 text-sm font-medium text-tinta " +
   "transition-colors hover:border-tinta hover:bg-cal-2";
 
-const ERROR_REQUIRED = "Completá todos los datos de la obra.";
-const ERROR_IMAGE_REQUIRED = "Elegí una imagen JPG, PNG o WebP.";
-const ERROR_IMAGE_SIZE = "La imagen no puede pasar de 5 MB.";
-const ERROR_IMAGE_TYPE = "La imagen tiene que ser JPG, PNG o WebP.";
-const ERROR_SLUG = "El slug va en minúsculas y con guiones.";
-const ERROR_AMOUNTS = "Revisá el precio base y el incremento en USDC.";
-const ERROR_PERCENT = "El porcentaje de la artista va de 0 a 100.";
-const ERROR_CLOSE_DATE = "La fecha de cierre tiene que ser futura.";
-const ERROR_WALLETS = "Las wallets tienen que ser direcciones G... válidas.";
-const ERROR_GENERIC = "No pudimos crear la subasta. Probá de nuevo.";
-const ERROR_SAVE = "La subasta se creó, pero no pudimos guardar la ficha.";
-
-const initialForm: FormState = {
-  titulo: "",
-  artista: "",
-  tecnica: "",
-  medidas: "",
-  anio: String(new Date().getFullYear()),
-  descripcion: "",
-  precio: "",
-  incremento: "",
-  porcentaje: "80",
-  cierre: "",
-  artistWallet: "",
-  venueWallet: ADMIN_ADDRESS,
-  slug: "",
-};
-
-const textFields: Array<{ key: keyof FormState; label: string }> = [
-  { key: "titulo", label: "Título" },
-  { key: "artista", label: "Artista" },
-  { key: "tecnica", label: "Técnica" },
-  { key: "medidas", label: "Medidas" },
-  { key: "anio", label: "Año" },
-  { key: "precio", label: "Precio base USDC" },
-  { key: "incremento", label: "Incremento mínimo USDC" },
-  { key: "porcentaje", label: "% para la artista" },
-  { key: "artistWallet", label: "Wallet de la artista (G...)" },
-  { key: "venueWallet", label: "Wallet del espacio" },
-  { key: "slug", label: "Slug" },
-];
+// Phone photos often weigh 5–10 MB; Vercel accepts up to 4.5 MB per request.
+const MAX_SIDE = 2000;
+const TARGET_BYTES = 1.5 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 
 function slugify(value: string): string {
   return value
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .replace(/-+/g, "-");
+    .replace(/-+/g, "-")
+    .slice(0, 80)
+    .replace(/-+$/, "");
 }
 
-function buildPayload(form: FormState, image: File, auctionId: number, hash: string): FormData {
-  const data = new FormData();
-  const fields = {
-    ...form,
-    precioMinimoUsdc: form.precio,
-    incrementoMinimoUsdc: form.incremento,
-    auctionId: String(auctionId),
-    hash,
-  };
-
-  for (const [key, value] of Object.entries(fields)) data.set(key, value);
-  data.set("imagen", image);
-  return data;
+function localInputValue(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-export function CargarForm() {
-  const { address, connecting, connect, signTransaction } = useWallet();
-  const [form, setForm] = useState<FormState>(initialForm);
+async function shrinkImage(file: File): Promise<File> {
+  if (file.size <= TARGET_BYTES && file.type !== "image/heic") return file;
+  const bitmap = await createImageBitmap(file).catch(() => null);
+  if (!bitmap) return file;
+  const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.86));
+  if (!blob || blob.type !== "image/webp") return file;
+  return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".webp", { type: "image/webp" });
+}
+
+export function CargarForm({ defaults }: { defaults: { venueWallet: string; artistWallet: string } }) {
+  const [form, setForm] = useState<FormState>(() => ({
+    titulo: "",
+    artista: "",
+    tecnica: "",
+    medidas: "",
+    anio: "",
+    descripcion: "",
+    alt: "",
+    precio: "",
+    incremento: "",
+    porcentaje: "80",
+    cierre: "",
+    artistWallet: defaults.artistWallet,
+    venueWallet: defaults.venueWallet,
+    slug: "",
+  }));
+  const router = useRouter();
+  const [slugTouched, setSlugTouched] = useState(false);
   const [image, setImage] = useState<File | null>(null);
-  const [transaction, setTransaction] = useState<TransactionView>(idleTransaction);
+  const [preparingImage, setPreparingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [created, setCreated] = useState<CreatedObra | null>(null);
   const [busy, setBusy] = useState(false);
+  const [created, setCreated] = useState<Created | null>(null);
   const preview = useMemo(() => (image ? URL.createObjectURL(image) : ""), [image]);
-  const isAdmin = address === ADMIN_ADDRESS;
+  const [minCierre, setMinCierre] = useState("");
 
-  function updateField(key: keyof FormState, value: string) {
+  useEffect(() => () => {
+    if (preview) URL.revokeObjectURL(preview);
+  }, [preview]);
+
+  useEffect(() => {
+    // Dates are read after mount: Cache Components prerenders this page and rejects new Date() during render.
+    const timer = window.setTimeout(() => {
+      setMinCierre(localInputValue(new Date(Date.now() + 10 * 60 * 1000)));
+      setForm((current) => (current.anio ? current : { ...current, anio: String(new Date().getFullYear()) }));
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  function update(key: FieldKey, value: string) {
     setForm((current) => ({
       ...current,
       [key]: value,
-      ...(key === "titulo" ? { slug: slugify(value) } : {}),
+      ...(key === "titulo" && !slugTouched ? { slug: slugify(value) } : {}),
     }));
   }
 
-  function validate(): string | null {
-    if (!form.titulo || !form.artista || !form.tecnica || !form.medidas || !form.descripcion) return ERROR_REQUIRED;
-    if (!image) return ERROR_IMAGE_REQUIRED;
-    if (image.size > 5 * 1024 * 1024) return ERROR_IMAGE_SIZE;
-    if (!/^image\/(jpeg|png|webp)$/.test(image.type)) return ERROR_IMAGE_TYPE;
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug)) return ERROR_SLUG;
-    if (!parseUsdc(form.precio) || !parseUsdc(form.incremento)) return ERROR_AMOUNTS;
-
-    const percent = Number(form.porcentaje);
-    if (!(percent >= 0 && percent <= 100)) return ERROR_PERCENT;
-
-    const close = new Date(form.cierre);
-    if (Number.isNaN(close.getTime()) || close.getTime() <= Date.now()) return ERROR_CLOSE_DATE;
-    if (!StrKey.isValidEd25519PublicKey(form.artistWallet) || !StrKey.isValidEd25519PublicKey(form.venueWallet)) {
-      return ERROR_WALLETS;
+  async function chooseImage(file: File | undefined) {
+    setError(null);
+    if (!file) {
+      setImage(null);
+      return;
     }
-    return null;
+    if (!/^image\//.test(file.type)) {
+      setError("Elegí una imagen JPG, PNG o WebP.");
+      return;
+    }
+    setPreparingImage(true);
+    try {
+      const ready = await shrinkImage(file);
+      if (!/^image\/(jpeg|png|webp)$/.test(ready.type)) setError("La imagen tiene que ser JPG, PNG o WebP.");
+      else if (ready.size > MAX_UPLOAD_BYTES) setError("La imagen sigue pesando más de 4 MB. Probá con otra.");
+      else setImage(ready);
+    } finally {
+      setPreparingImage(false);
+    }
   }
 
-  async function saveObra(auctionId: number, hash: string) {
-    if (!image) throw new Error(ERROR_IMAGE_REQUIRED);
-    const response = await fetch("/api/obras", {
-      method: "POST",
-      body: buildPayload(form, image, auctionId, hash),
-    });
-    const json = (await response.json().catch(() => ({}))) as { error?: string };
-    if (!response.ok) throw new Error(`${json.error || ERROR_SAVE} ID de subasta: ${auctionId}`);
+  function validate(): string | null {
+    if (!form.titulo.trim() || !form.artista.trim() || !form.tecnica.trim() || !form.medidas.trim()) {
+      return "Completá título, artista, técnica y medidas.";
+    }
+    if (!image) return "Elegí la imagen de la obra.";
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug)) return "El slug va en minúsculas y con guiones (por ejemplo, atardecer-en-uspallata).";
+    if (!parseUsdc(form.precio)) return "Ingresá un precio base en USDC mayor a 0.";
+    if (!parseUsdc(form.incremento)) return "Ingresá un incremento mínimo en USDC mayor a 0.";
+    const percent = Number(form.porcentaje);
+    if (!Number.isInteger(percent) || percent < 0 || percent > 100) return "El porcentaje de la artista es un entero de 0 a 100.";
+    const close = new Date(form.cierre);
+    if (Number.isNaN(close.getTime()) || close.getTime() < Date.now() + 5 * 60 * 1000) {
+      return "El cierre tiene que ser al menos 5 minutos en el futuro.";
+    }
+    if (!StrKey.isValidEd25519PublicKey(form.artistWallet.trim())) return "La wallet de la artista tiene que ser una dirección G… válida.";
+    if (!StrKey.isValidEd25519PublicKey(form.venueWallet.trim())) return "La wallet del espacio tiene que ser una dirección G… válida.";
+    return null;
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy) return;
     setError(null);
     setCreated(null);
 
-    const validationError = validate();
-    if (validationError) {
-      setError(validationError);
+    const problem = validate();
+    if (problem || !image) {
+      setError(problem ?? "Elegí la imagen de la obra.");
       return;
     }
 
+    const data = new FormData();
+    for (const [key, value] of Object.entries(form)) data.set(key, value.trim());
+    data.set("cierre", new Date(form.cierre).toISOString());
+    data.set("imagen", image);
+
     setBusy(true);
     try {
-      setTransaction({ state: "working", message: "Confirmá en tu wallet…" });
-      const minPrice = parseUsdc(form.precio);
-      const minIncrement = parseUsdc(form.incremento);
-      if (!minPrice || !minIncrement || !address) throw new Error(ERROR_AMOUNTS);
-
-      const endTime = Math.floor(new Date(form.cierre).getTime() / 1000);
-      const result = await createAuction({
-        artist: form.artistWallet,
-        venue: form.venueWallet,
-        artistBps: Math.round(Number(form.porcentaje) * 100),
-        minPrice,
-        minIncrement,
-        endTime,
-        signer: address,
-        signTransaction,
-      });
-
-      setTransaction({ state: "working", message: "Enviando a la red…" });
-      await saveObra(result.auctionId, result.hash);
-      setTransaction({
-        state: "success",
-        message: "La subasta quedó creada y la obra guardada.",
-        hash: result.hash,
-      });
-      setCreated({ slug: form.slug, auctionId: result.auctionId });
+      const response = await fetch("/api/obras", { method: "POST", body: data });
+      const body = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        slug?: string;
+        auctionId?: number;
+        hash?: string;
+      };
+      if (response.status === 401) {
+        router.push("/admin/entrar?volver=/admin/cargar");
+        return;
+      }
+      if (!response.ok || body.slug === undefined || body.auctionId === undefined || !body.hash) {
+        throw new Error(body.error || "No pudimos crear la subasta. Probá de nuevo.");
+      }
+      setCreated({ slug: body.slug, auctionId: body.auctionId, hash: body.hash, titulo: form.titulo.trim() });
+      setForm((current) => ({ ...current, titulo: "", slug: "", descripcion: "", alt: "", medidas: "", tecnica: "" }));
+      setSlugTouched(false);
+      setImage(null);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (cause) {
-      setTransaction(idleTransaction);
-      setError(cause instanceof Error ? cause.message : ERROR_GENERIC);
+      setError(cause instanceof Error ? cause.message : "No pudimos crear la subasta. Probá de nuevo.");
     } finally {
       setBusy(false);
     }
   }
 
-  if (!address) {
-    return (
-      <section className="cartela panel-sala">
-        <p className="etiqueta"><T>Cargar obra</T></p>
-        <h1 className="mt-2 font-serif text-4xl leading-tight"><T>Entrá con la wallet del espacio</T></h1>
-        <p className="mt-3 text-tinta-2">
-          <T>Esta página crea subastas reales en Testnet, por eso primero tenés que entrar.</T>
-        </p>
-        <button
-          type="button"
-          className={`${buttonClass} mt-5 bg-malbec text-cal`}
-          disabled={connecting}
-          onClick={() => void connect()}
-        >
-          <T>{connecting ? "Entrando…" : "Entrar"}</T>
-        </button>
-      </section>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <section className="cartela panel-sala">
-        <h1 className="font-serif text-3xl"><T>Esta página es solo para el espacio</T></h1>
-        <p className="mt-3 text-tinta-2">
-          <T>La wallet conectada no es la administradora del contrato. En esta demo local no hay getter público de admin,
-          así se compara con la dirección pública de despliegue.</T>
-        </p>
-      </section>
-    );
-  }
+  const minPrice = parseUsdc(form.precio);
+  const percent = Number(form.porcentaje);
 
   return (
     <section className="cartela p-5">
-      <p className="etiqueta"><T>Espacio</T></p>
-      <h1 className="mt-2 font-serif text-3xl"><T>Cargar una obra</T></h1>
-      <form onSubmit={(event) => void handleSubmit(event)} className="mt-5 grid gap-4">
-        {textFields.map((field) => (
-          <label key={field.key} className="text-sm font-medium">
-            <T>{field.label}</T>
+      <h1 className="font-serif text-3xl"><T>Cargar una obra</T></h1>
+      <p className="mt-2 text-sm text-tinta-2">
+        <T>Al guardar, se crea la subasta en el contrato de Stellar Testnet y la obra aparece en la muestra.</T>
+      </p>
+
+      {created && (
+        <div role="status" className="mt-5 rounded-sm border border-exito/30 bg-exito/5 p-4">
+          <p className="font-medium text-exito">
+            <T>Listo:</T> «{created.titulo}» <T>ya está en la muestra (subasta</T> #{created.auctionId}).
+          </p>
+          <div className="mt-3 flex flex-wrap gap-3">
+            <Link className={secondaryLinkClass} href={`/obra/${created.slug}`}><T>Ver ficha</T></Link>
+            <Link className={secondaryLinkClass} href="/qr"><T>Hoja de QR</T></Link>
+            <a className={secondaryLinkClass} href={txUrl(created.hash)} target="_blank" rel="noreferrer">
+              <T>Ver transacción</T>
+            </a>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={(event) => void handleSubmit(event)} className="mt-5 grid gap-6" noValidate>
+        <fieldset className="grid gap-4" disabled={busy}>
+          <legend className="etiqueta mb-1"><T>La obra</T></legend>
+          <label className="text-sm font-medium">
+            <T>Título</T>
+            <input className={inputClass} required maxLength={120} value={form.titulo} onChange={(e) => update("titulo", e.target.value)} />
+          </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-medium">
+              <T>Artista</T>
+              <input className={inputClass} required maxLength={80} value={form.artista} onChange={(e) => update("artista", e.target.value)} />
+            </label>
+            <label className="text-sm font-medium">
+              <T>Año</T>
+              <input className={inputClass} required inputMode="numeric" value={form.anio} onChange={(e) => update("anio", e.target.value)} />
+            </label>
+            <label className="text-sm font-medium">
+              <T>Técnica</T>
+              <TranslatedAttributes><input className={inputClass} required maxLength={120} placeholder="Óleo sobre tela" value={form.tecnica} onChange={(e) => update("tecnica", e.target.value)} /></TranslatedAttributes>
+            </label>
+            <label className="text-sm font-medium">
+              <T>Medidas</T>
+              <input className={inputClass} required maxLength={60} placeholder="60 × 80 cm" value={form.medidas} onChange={(e) => update("medidas", e.target.value)} />
+            </label>
+          </div>
+          <label className="text-sm font-medium">
+            <T>Descripción</T>
+            <textarea className={`${inputClass} min-h-24 py-2`} maxLength={2000} value={form.descripcion} onChange={(e) => update("descripcion", e.target.value)} />
+          </label>
+          <label className="text-sm font-medium">
+            <T>Imagen (JPG, PNG o WebP)</T>
             <input
-              className={inputClass}
-              value={form[field.key]}
-              onChange={(event) => updateField(field.key, event.target.value)}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className={`${inputClass} py-2`}
+              onChange={(e) => void chooseImage(e.target.files?.[0])}
             />
           </label>
-        ))}
+          {preparingImage && <p className="text-sm text-tinta-2"><T>Preparando la imagen…</T></p>}
+          {preview && (
+            // eslint-disable-next-line @next/next/no-img-element -- local blob: preview, next/image cannot optimize it
+            <img src={preview} alt="" className="max-h-64 w-full rounded-sm bg-cal-2 object-contain" />
+          )}
+          <label className="text-sm font-medium">
+            <T>Descripción de la imagen para lectores de pantalla (opcional)</T>
+            <input className={inputClass} maxLength={300} value={form.alt} onChange={(e) => update("alt", e.target.value)} />
+          </label>
+        </fieldset>
 
-        <label className="text-sm font-medium">
-          <T>Descripción</T>
-          <textarea
-            className={`${inputClass} min-h-24`}
-            value={form.descripcion}
-            onChange={(event) => updateField("descripcion", event.target.value)}
-          />
-        </label>
+        <fieldset className="grid gap-4" disabled={busy}>
+          <legend className="etiqueta mb-1"><T>La subasta</T></legend>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-medium">
+              <T>Precio base (USDC)</T>
+              <input className={inputClass} required inputMode="decimal" placeholder="50" value={form.precio} onChange={(e) => update("precio", e.target.value)} />
+            </label>
+            <label className="text-sm font-medium">
+              <T>Incremento mínimo (USDC)</T>
+              <input className={inputClass} required inputMode="decimal" placeholder="5" value={form.incremento} onChange={(e) => update("incremento", e.target.value)} />
+            </label>
+            <label className="text-sm font-medium">
+              <T>Porcentaje para la artista</T>
+              <input className={inputClass} required inputMode="numeric" value={form.porcentaje} onChange={(e) => update("porcentaje", e.target.value)} />
+            </label>
+            <label className="text-sm font-medium">
+              <T>Cierre</T>
+              <input type="datetime-local" className={inputClass} required min={minCierre} value={form.cierre} onChange={(e) => update("cierre", e.target.value)} />
+            </label>
+          </div>
+          {minPrice && Number.isInteger(percent) && percent >= 0 && percent <= 100 && (
+            <p className="text-sm text-tinta-2">
+              {/* Same rounding as settle(): the venue share rounds down and the remainder goes to the artist. */}
+              <T>Con el precio base, la artista cobra</T> {formatUsdc(minPrice - (minPrice * BigInt(100 - percent)) / BigInt(100))} USDC{" "}
+              <T>y el espacio</T> {formatUsdc((minPrice * BigInt(100 - percent)) / BigInt(100))} USDC.
+            </p>
+          )}
+          <label className="text-sm font-medium">
+            <T>Wallet de la artista (G…)</T>
+            <input className={`${inputClass} font-mono text-sm`} required spellCheck={false} autoCapitalize="characters" value={form.artistWallet} onChange={(e) => update("artistWallet", e.target.value)} />
+          </label>
+          <label className="text-sm font-medium">
+            <T>Wallet del espacio (G…)</T>
+            <input className={`${inputClass} font-mono text-sm`} required spellCheck={false} autoCapitalize="characters" value={form.venueWallet} onChange={(e) => update("venueWallet", e.target.value)} />
+          </label>
+          <label className="text-sm font-medium">
+            <T>Slug (dirección de la ficha)</T>
+            <input
+              className={`${inputClass} font-mono text-sm`}
+              required
+              spellCheck={false}
+              value={form.slug}
+              onChange={(e) => {
+                setSlugTouched(true);
+                update("slug", e.target.value);
+              }}
+            />
+            <span className="mt-1 block text-xs font-normal text-tinta-2">/obra/{form.slug || "…"}</span>
+          </label>
+        </fieldset>
 
-        <label className="text-sm font-medium">
-          <T>Fecha y hora de cierre</T>
-          <input
-            type="datetime-local"
-            className={inputClass}
-            value={form.cierre}
-            onChange={(event) => updateField("cierre", event.target.value)}
-          />
-        </label>
-
-        <label className="text-sm font-medium">
-          <T>Imagen</T>
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className={inputClass}
-            onChange={(event) => setImage(event.target.files?.[0] ?? null)}
-          />
-        </label>
-
-        <T>{preview && (
-          <TranslatedAttributes><Image
-            src={preview}
-            alt="Vista previa de la obra"
-            width={800}
-            height={560}
-            unoptimized
-            className="max-h-56 w-full rounded-sm object-contain"
-          /></TranslatedAttributes>
-        )}</T>
-
-        <T>{error && (
+        {error && (
           <p role="alert" className="rounded-sm border border-malbec/30 bg-malbec/5 px-3 py-2 text-sm text-malbec">
             <T>{error}</T>
           </p>
-        )}</T>
-
-        <button type="submit" disabled={busy} className={`${buttonClass} bg-malbec text-cal disabled:opacity-60`}>
-          <T>{busy ? "Creando…" : "Crear subasta y guardar obra"}</T>
-        </button>
-        <TransactionStatus transaction={transaction} />
-
-        {created && (
-          <div className="rounded-sm border border-exito/30 bg-exito/5 p-4">
-            <p className="font-medium text-exito"><T>Obra creada. Subasta</T> {created.auctionId}.</p>
-            <div className="mt-3 flex flex-wrap gap-3">
-              <Link className={secondaryLinkClass} href={`/obra/${created.slug}`}>
-                <T>Ver ficha</T>
-              </Link>
-              <Link className={secondaryLinkClass} href="/qr">
-                <T>Ver hoja de QR</T>
-              </Link>
-            </div>
-          </div>
         )}
+
+        <button
+          type="submit"
+          disabled={busy || preparingImage}
+          className="min-h-12 rounded-full bg-malbec px-6 font-medium text-cal transition-colors hover:bg-malbec-2 disabled:opacity-60"
+        >
+          <T>{busy ? "Creando la subasta en Stellar…" : "Crear subasta y publicar obra"}</T>
+        </button>
       </form>
     </section>
   );
