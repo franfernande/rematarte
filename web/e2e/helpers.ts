@@ -16,8 +16,6 @@ const obrasPath = existsSync(path.join(dataDir, "obras.json"))
 
 export const obras: Obra[] = JSON.parse(readFileSync(obrasPath, "utf8"));
 
-const FAUCET_RETRY_MS = 65_000;
-
 // Headless Chromium may report passkey support; hiding WebAuthn forces the "account on this device" path.
 export async function disablePasskeys(page: Page): Promise<void> {
   await page.addInitScript(() => {
@@ -31,18 +29,9 @@ export async function loginWithDeviceAccount(page: Page): Promise<string> {
   const dialog = page.getByRole("dialog", { name: /Entrá a la muestra/ });
   await dialog.getByRole("button", { name: "Crear cuenta en este dispositivo" }).click();
 
-  const ready = dialog.getByText("¡Listo!");
-  const failed = dialog.getByRole("button", { name: "Crear cuenta en este dispositivo" });
-  await expect(ready.or(failed)).toBeVisible({ timeout: 120_000 });
-
-  if (await failed.isVisible()) {
-    // Usually the faucet's per-IP limit; the device account is reused and finished steps are skipped.
-    await page.waitForTimeout(FAUCET_RETRY_MS);
-    await failed.click();
-    await expect(ready).toBeVisible({ timeout: 120_000 });
-  }
-
-  await expect(dialog.getByText(/Saldo de prueba: 200(,0+)? USDC/)).toBeVisible();
+  await expect(dialog.getByText("¡Listo!")).toBeVisible({ timeout: 120_000 });
+  // The dialog also says "¡Listo!" when preparation failed, with a 0 USDC balance and the reason.
+  await expect(dialog.getByText(/Saldo de prueba: 200(,0+)? USDC/), "la cuenta no recibió los 200 USDC de prueba").toBeVisible();
   const address = await page.evaluate(() => {
     const raw = localStorage.getItem("rematarte.local-wallet");
     return raw ? (JSON.parse(raw) as { publicKey: string }).publicKey : null;

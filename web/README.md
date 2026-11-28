@@ -29,7 +29,7 @@ npm run test:e2e
 - `onboarding.spec.ts`: crea una cuenta descartable en el dispositivo y espera los 200 USDC de prueba (usa la faucet una vez por corrida), y prueba que la faucet rechace otros orígenes y direcciones inválidas.
 - `pujas.spec.ts`: dos cuentas ofertan en la misma obra y la primera ve el reembolso. **Hace ofertas reales**: bloquea USDC de prueba en la subasta y le sube el precio, así que solo corre con `E2E_BIDS=1` (y `E2E_BID_SLUG=<slug>` para elegir la obra; por defecto, la última).
 
-Corren de a una: la faucet acepta un pedido por minuto por IP y las pruebas comparten subastas. Si un pedido choca con ese límite, el ayudante espera un minuto y reintenta.
+Corren de a una porque comparten subastas en vivo.
 
 ## Deploy (B7)
 
@@ -87,4 +87,4 @@ La cuenta "en este dispositivo" guarda su secret key en `localStorage`: sirve so
 
 - Una entrega por cuenta: el pago va en la misma transacción que una entrada `manageData` (`u:<cuenta>`) en la distribuidora. La marca es pública y no hace falta una base de datos. Cada marca bloquea 0,5 XLM de reserva en la distribuidora.
 - Si la cuenta ya recibió USDC, responde `{ funded: false, alreadyClaimed: true }` sin mover fondos, y el onboarding da el paso por hecho con el saldo que quede.
-- Rechaza pedidos de otro origen y limita a un envío por minuto por cuenta y por IP. Ese límite vive en memoria por instancia y es solo un freno; el tope real es la marca.
+- Rechaza pedidos de otro origen y limita a un envío por minuto por cuenta y a 20 por minuto por IP (en la sala, todos comparten la IP del Wi-Fi). Ese límite vive en memoria por instancia y es solo un freno; el tope real es la marca.
