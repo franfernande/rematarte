@@ -33,12 +33,12 @@ Corren de a una porque comparten subastas en vivo.
 
 ## Deploy (B7)
 
-Producción: **https://artemi.vercel.app** (proyecto `artemi` en Vercel, Root Directory `web`, preset Next.js). Ese dominio es público; las URLs generadas por cada deploy piden login de Vercel.
+Producción: **https://artemi-arte.vercel.app** (proyecto `artemi` en Vercel, Root Directory `web`, preset Next.js). Ese dominio es público; las URLs generadas por cada deploy piden login de Vercel. `artemi.vercel.app` ya pertenece a otro proyecto de Vercel, así que no se puede usar. `rematarte.vercel.app` sigue abriendo este mismo sitio.
 
 - `USDC_DISTRIBUTOR_SECRET` se carga solo en Vercel, por quien la tenga y desde un checkout vinculado: `vercel env add USDC_DISTRIBUTOR_SECRET production --sensitive` (la CLI pide el valor; no va en la línea de comando ni en el repo). Después hay que volver a desplegar. Sin la variable, `/api/faucet` responde 503 y el resto anda igual.
 - El repo todavía no está conectado por Git (la app de Vercel no tiene acceso a `franfernande/artemi`). Cuando lo tenga: `vercel git connect` y cada push a `main` despliega solo.
 - Mientras tanto, se despliega a mano desde un checkout limpio de `main`, en la raíz del repo: `vercel link --project artemi` y `vercel deploy --prod`. `vercel link` crea un `.env.local` con un token temporal: borralo antes de desplegar.
-- Los QR se imprimen desde https://artemi.vercel.app/qr.
+- Los QR se imprimen desde https://artemi-arte.vercel.app/qr.
 
 ## Datos
 

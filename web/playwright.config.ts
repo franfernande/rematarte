@@ -10,7 +10,7 @@ export default defineConfig({
   retries: 0,
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
-    baseURL: process.env.E2E_BASE_URL ?? "https://artemi.vercel.app",
+    baseURL: process.env.E2E_BASE_URL ?? "https://artemi-arte.vercel.app",
     locale: "es-AR",
     timezoneId: "America/Argentina/Mendoza",
     trace: "retain-on-failure",
