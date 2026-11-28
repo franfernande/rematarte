@@ -6,12 +6,35 @@ import { BlobNotFoundError, get, list, put } from "@vercel/blob";
 
 // Storage for what the web writes at runtime: obras uploaded by the admin, their images and bidder contacts.
 // On Vercel the filesystem is read-only, so production uses a *private* Vercel Blob store
-// (BLOB_READ_WRITE_TOKEN). Locally, without the token, everything lives in web/.data/ (gitignored).
+// store. Locally, without Blob credentials, everything lives in web/.data/ (gitignored).
+//
+// Vercel connects a Blob store in one of three ways, and all of them are accepted:
+// - BLOB_READ_WRITE_TOKEN (classic),
+// - <PREFIX>_BLOB_READ_WRITE_TOKEN or <PREFIX>_READ_WRITE_TOKEN when a custom prefix is chosen,
+// - BLOB_STORE_ID with OIDC (the SDK gets the token from the function by itself).
 
 export class StoreUnavailableError extends Error {
   constructor() {
     super("Falta configurar el almacenamiento (BLOB_READ_WRITE_TOKEN en Vercel).");
   }
+}
+
+function blobToken(): string | undefined {
+  if (process.env.BLOB_READ_WRITE_TOKEN) return process.env.BLOB_READ_WRITE_TOKEN;
+  const prefixed = Object.keys(process.env).find(
+    (name) => /READ_WRITE_TOKEN$/.test(name) && process.env[name]?.startsWith("vercel_blob_rw_"),
+  );
+  return prefixed ? process.env[prefixed] : undefined;
+}
+
+function blobConfigured(): boolean {
+  return Boolean(blobToken() || process.env.BLOB_STORE_ID);
+}
+
+// Only passes the token when it was found under another name; otherwise the SDK reads the env itself.
+function auth(): { token?: string } {
+  const token = blobToken();
+  return token && token !== process.env.BLOB_READ_WRITE_TOKEN ? { token } : {};
 }
 
 export type StoredFile = { body: ReadableStream<Uint8Array> | Uint8Array; contentType: string };
@@ -33,7 +56,7 @@ function checkKey(key: string): string {
 
 const blobBackend: Backend = {
   async readText(key) {
-    const result = await get(checkKey(key), { access: "private", useCache: false }).catch((error: unknown) => {
+    const result = await get(checkKey(key), { access: "private", useCache: false, ...auth() }).catch((error: unknown) => {
       if (error instanceof BlobNotFoundError) return null;
       throw error;
     });
@@ -42,6 +65,7 @@ const blobBackend: Backend = {
   },
   async writeText(key, text) {
     await put(checkKey(key), text, {
+      ...auth(),
       access: "private",
       addRandomSuffix: false,
       allowOverwrite: true,
@@ -49,7 +73,7 @@ const blobBackend: Backend = {
     });
   },
   async readFile(key) {
-    const result = await get(checkKey(key), { access: "private" }).catch((error: unknown) => {
+    const result = await get(checkKey(key), { access: "private", ...auth() }).catch((error: unknown) => {
       if (error instanceof BlobNotFoundError) return null;
       throw error;
     });
@@ -58,6 +82,7 @@ const blobBackend: Backend = {
   },
   async writeFile(key, data, contentType) {
     await put(checkKey(key), Buffer.from(data), {
+      ...auth(),
       access: "private",
       addRandomSuffix: false,
       allowOverwrite: false,
@@ -68,7 +93,7 @@ const blobBackend: Backend = {
     const keys: string[] = [];
     let cursor: string | undefined;
     do {
-      const page = await list({ prefix, cursor });
+      const page = await list({ prefix, cursor, ...auth() });
       keys.push(...page.blobs.map((blob) => blob.pathname));
       cursor = page.hasMore ? page.cursor : undefined;
     } while (cursor);
@@ -127,14 +152,17 @@ const fsBackend: Backend = {
 };
 
 function backend(): Backend {
-  if (process.env.BLOB_READ_WRITE_TOKEN) return blobBackend;
+  if (blobConfigured()) return blobBackend;
   // Vercel functions cannot write to disk: without a Blob store there is nowhere to save.
-  if (process.env.VERCEL) throw new StoreUnavailableError();
+  if (process.env.VERCEL) {
+    console.error("[store] No hay credenciales de Vercel Blob: falta BLOB_READ_WRITE_TOKEN o BLOB_STORE_ID en este deploy.");
+    throw new StoreUnavailableError();
+  }
   return fsBackend;
 }
 
 export function storeConfigured(): boolean {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN) || !process.env.VERCEL;
+  return blobConfigured() || !process.env.VERCEL;
 }
 
 export async function readJson(key: string): Promise<unknown> {
