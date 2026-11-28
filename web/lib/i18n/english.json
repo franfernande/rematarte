@@ -584,5 +584,7 @@
   "Pinacoteca Sanmartiniana · familia Roig": "Pinacoteca Sanmartiniana · Roig family",
   "Patrimonio Artístico de la Secretaría de Agricultura": "Art collection of the Secretariat of Agriculture",
   "Museo Virtual de Godoy Cruz": "Godoy Cruz Virtual Museum",
-  "Sobre la obra": "About the artwork"
+  "Sobre la obra": "About the artwork",
+  "Esta cuenta ya recibió su USDC de prueba. Podés ofertar con el saldo que te queda.": "This account has already received its test USDC. You can bid with the remaining balance.",
+  "Te completamos el saldo hasta 200 USDC de prueba, una vez por cuenta. Si ya tenés 200 o más, este paso se marca solo.": "We top up your test USDC balance to 200 once per account. If you already have 200 or more, this step completes automatically."
 }

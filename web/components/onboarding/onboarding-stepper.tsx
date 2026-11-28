@@ -69,6 +69,7 @@ function OnboardingStepperContent({ obra }: { obra?: string }) {
   );
   const [usdcTxHash, setUsdcTxHash] = useState<string | null>(null);
   const [fundingTxHash, setFundingTxHash] = useState<string | null>(null);
+  const [claimedFor, setClaimedFor] = useState<string | null>(null);
 
   const setStepError = useCallback((step: StepId, message: string | null) => {
     setErrors((current) => {
@@ -139,7 +140,7 @@ function OnboardingStepperContent({ obra }: { obra?: string }) {
   const initialReading = Boolean(address) && checking && !hasReadAccountState;
   const accountDone = Boolean(address) && accountState.exists;
   const usdcEnabled = accountDone && accountState.hasTrustline;
-  const fundsDone = usdcEnabled && accountState.usdcBalanceStroops >= ONBOARDING_TARGET_STROOPS;
+  const fundsDone = usdcEnabled && (accountState.usdcBalanceStroops >= ONBOARDING_TARGET_STROOPS || claimedFor === address);
 
   function statusFor(step: StepId, done: boolean, available: boolean): OnboardingStepStatus {
     if (done) return "hecho";
@@ -235,6 +236,12 @@ function OnboardingStepperContent({ obra }: { obra?: string }) {
     setLiveMessage("Pidiendo tu saldo de prueba.");
     try {
       const result = await requestUsdcFaucet(address);
+      if (!result.funded && result.alreadyClaimed) {
+        setClaimedFor(address);
+        await refreshAccountState(address);
+        setLiveMessage("Esta cuenta ya recibió su USDC de prueba. Podés ofertar con el saldo que te queda.");
+        return;
+      }
       if (result.funded) setFundingTxHash(result.hash);
       const next = await waitForTargetUsdcBalance(address);
       setAccountState(next);
@@ -400,7 +407,7 @@ function OnboardingStepperContent({ obra }: { obra?: string }) {
             <TranslatedAttributes><OnboardingStepCard
               number={4}
               title="Recibí 200 USDC de prueba"
-              description="Te completamos el saldo hasta 200 USDC de prueba. Si ya tenés 200 o más, este paso se marca solo."
+              description="Te completamos el saldo hasta 200 USDC de prueba, una vez por cuenta. Si ya tenés 200 o más, este paso se marca solo."
               status={statusFor("funds", fundsDone, usdcEnabled)}
               busy={workingStep === "funds"}
               error={errors.funds}

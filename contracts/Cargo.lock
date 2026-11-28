@@ -1415,7 +1415,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rematarte-auction"
+name = "artemi-auction"
 version = "0.1.0"
 dependencies = [
  "soroban-sdk",

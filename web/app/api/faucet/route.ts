@@ -1,4 +1,4 @@
-import { Asset, BASE_FEE, Keypair, Operation, StrKey, TransactionBuilder } from "@stellar/stellar-sdk";
+import { Asset, BASE_FEE, Horizon, Keypair, Operation, StrKey, TransactionBuilder } from "@stellar/stellar-sdk";
 import type { NextRequest } from "next/server";
 import deployConfig from "@/data/deploy.testnet.json";
 import {
@@ -14,30 +14,34 @@ import {
 } from "@/lib/onboarding";
 
 const RATE_LIMIT_MS = 60_000;
+// Visitors at the venue share one public IP; the hard cap is the one-grant-per-account marker.
+const MAX_GRANTS_PER_IP = 20;
 
 type RateLimitStore = {
   byAddress: Map<string, number>;
-  byIp: Map<string, number>;
+  byIp: Map<string, number[]>;
 };
 
 const globalWithRateLimit = globalThis as typeof globalThis & {
-  __rematarteFaucetRateLimit?: RateLimitStore;
+  __artemiFaucetRateLimit?: RateLimitStore;
 };
 
 function getRateLimitStore(): RateLimitStore {
-  globalWithRateLimit.__rematarteFaucetRateLimit ??= {
+  globalWithRateLimit.__artemiFaucetRateLimit ??= {
     byAddress: new Map<string, number>(),
-    byIp: new Map<string, number>(),
+    byIp: new Map<string, number[]>(),
   };
-  return globalWithRateLimit.__rematarteFaucetRateLimit;
+  return globalWithRateLimit.__artemiFaucetRateLimit;
 }
 
 function pruneStore(store: RateLimitStore, now: number) {
   for (const [key, at] of store.byAddress) {
     if (now - at > RATE_LIMIT_MS) store.byAddress.delete(key);
   }
-  for (const [key, at] of store.byIp) {
-    if (now - at > RATE_LIMIT_MS) store.byIp.delete(key);
+  for (const [key, grants] of store.byIp) {
+    const recent = grants.filter((at) => now - at <= RATE_LIMIT_MS);
+    if (recent.length === 0) store.byIp.delete(key);
+    else store.byIp.set(key, recent);
   }
 }
 
@@ -53,8 +57,9 @@ function rateLimitRetryAfterSeconds(address: string, ip: string): number {
   pruneStore(store, now);
 
   const lastByAddress = store.byAddress.get(address) ?? 0;
-  const lastByIp = store.byIp.get(ip) ?? 0;
-  const retryAfterMs = Math.max(lastByAddress + RATE_LIMIT_MS - now, lastByIp + RATE_LIMIT_MS - now, 0);
+  const ipGrants = store.byIp.get(ip) ?? [];
+  const ipRetryMs = ipGrants.length >= MAX_GRANTS_PER_IP ? ipGrants[0] + RATE_LIMIT_MS - now : 0;
+  const retryAfterMs = Math.max(lastByAddress + RATE_LIMIT_MS - now, ipRetryMs, 0);
   return retryAfterMs > 0 ? Math.ceil(retryAfterMs / 1_000) : 0;
 }
 
@@ -62,14 +67,16 @@ function markRateLimit(address: string, ip: string): number {
   const now = Date.now();
   const store = getRateLimitStore();
   store.byAddress.set(address, now);
-  store.byIp.set(ip, now);
+  store.byIp.set(ip, [...(store.byIp.get(ip) ?? []), now]);
   return now;
 }
 
 function unmarkRateLimit(address: string, ip: string, at: number) {
   const store = getRateLimitStore();
   if (store.byAddress.get(address) === at) store.byAddress.delete(address);
-  if (store.byIp.get(ip) === at) store.byIp.delete(ip);
+  const grants = store.byIp.get(ip);
+  const index = grants?.indexOf(at) ?? -1;
+  if (grants && index >= 0) grants.splice(index, 1);
 }
 
 function json(body: FaucetResponse | FaucetErrorResponse, status = 200, headers?: HeadersInit): Response {
@@ -83,6 +90,14 @@ function error(status: number, message: string, retryAfterSeconds?: number, cate
     status,
     retryAfterSeconds ? { "Retry-After": String(retryAfterSeconds) } : undefined,
   );
+}
+
+function claimMarker(address: string): string {
+  return `u:${address}`;
+}
+
+function hasClaimed(distributorAccount: Horizon.AccountResponse, address: string): boolean {
+  return Object.hasOwn(distributorAccount.data_attr, claimMarker(address));
 }
 
 function readAddress(body: unknown): string | null {
@@ -120,6 +135,11 @@ function paymentFailureResponse(errorUnknown: unknown): Response {
 }
 
 export async function POST(request: NextRequest) {
+  const origin = request.headers.get("origin");
+  if (origin && origin !== request.nextUrl.origin) {
+    return error(403, "Este faucet solo responde a la web de Artemi.");
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -164,7 +184,7 @@ export async function POST(request: NextRequest) {
   const ip = clientIp(request);
   const retryAfter = rateLimitRetryAfterSeconds(address, ip);
   if (retryAfter > 0) {
-    return error(429, "Ya se entregó USDC de prueba hace menos de un minuto. Esperá un poco y probá de nuevo.", retryAfter);
+    return error(429, "Hay muchos pedidos de USDC de prueba en este momento. Esperá un minuto y probá de nuevo.", retryAfter);
   }
 
   let distributorAccount;
@@ -176,6 +196,9 @@ export async function POST(request: NextRequest) {
     }
     return error(502, "No pudimos leer la cuenta que envía USDC de prueba en la red de prueba. Esperá unos segundos y probá de nuevo.");
   }
+  if (hasClaimed(distributorAccount, address)) {
+    return json({ funded: false, alreadyClaimed: true });
+  }
 
   const amountStroops = ONBOARDING_TARGET_STROOPS - currentBalance;
   const amount = stroopsToAssetAmount(amountStroops);
@@ -185,6 +208,8 @@ export async function POST(request: NextRequest) {
     networkPassphrase: deployConfig.networkPassphrase,
   })
     .addOperation(Operation.payment({ destination: address, asset, amount }))
+    // Atomic with the payment: this public marker caps the faucet at one grant per account without a database.
+    .addOperation(Operation.manageData({ name: claimMarker(address), value: "1" }))
     .setTimeout(180)
     .build();
   transaction.sign(distributor);
@@ -195,6 +220,9 @@ export async function POST(request: NextRequest) {
     return json({ funded: true, hash: submitted.hash, amount });
   } catch (submitError) {
     unmarkRateLimit(address, ip, rateLimitMark);
+    // A concurrent request may have won with the same sequence number; the marker is the source of truth.
+    const latest = await server.loadAccount(distributor.publicKey()).catch(() => null);
+    if (latest && hasClaimed(latest, address)) return json({ funded: false, alreadyClaimed: true });
     return paymentFailureResponse(submitError);
   }
 }

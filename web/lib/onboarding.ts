@@ -35,7 +35,7 @@ export const emptyOnboardingAccountState: OnboardingAccountState = {
 
 export type FaucetResponse =
   | { funded: true; hash: string; amount: string }
-  | { funded: false };
+  | { funded: false; alreadyClaimed?: boolean };
 
 export type FaucetErrorResponse = {
   error: string;
@@ -331,11 +331,14 @@ export async function prepareAccount({
     currentStep = "usdc";
     emit("usdc", "running");
     if (state.usdcBalanceStroops < ONBOARDING_TARGET_STROOPS) {
-      await requestUsdcFaucet(address);
-      state = await waitForTargetUsdcBalance(address);
-    }
-    if (state.usdcBalanceStroops < ONBOARDING_TARGET_STROOPS) {
-      throw new Error("El saldo de USDC de prueba todavía no llega a 200. Esperá unos segundos y verificá de nuevo.");
+      const result = await requestUsdcFaucet(address);
+      // The faucet pays once per account; after that the account bids with whatever balance it has left.
+      if (result.funded || !result.alreadyClaimed) {
+        state = await waitForTargetUsdcBalance(address);
+        if (state.usdcBalanceStroops < ONBOARDING_TARGET_STROOPS) {
+          throw new Error("El saldo de USDC de prueba todavía no llega a 200. Esperá unos segundos y verificá de nuevo.");
+        }
+      }
     }
     emit("usdc", "done");
     emit("done", "done");

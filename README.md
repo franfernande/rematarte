@@ -1,4 +1,4 @@
-# RematArte
+# Artemi
 
 **Subastas de arte en vivo con respaldo real en Stellar.**
 Cada obra de la muestra tiene un QR. Lo escaneás, ves la obra, la puja actual y ofertás en USDC. Tu oferta queda depositada en un contrato: si te superan, te devuelven la plata al instante; si ganás, la artista y el espacio cobran solos. Nadie persigue al ganador para que pague.
@@ -9,7 +9,7 @@ Cada obra de la muestra tiene un QR. Lo escaneás, ves la obra, la puja actual y
 
 ## Estado / Demo
 
-- **App:** [COMPLETAR: URL de Vercel] (todavía no hay URL pública).
+- **App:** https://artemi-arte.vercel.app
 - **Red:** Stellar Testnet.
 - **Contrato de subastas:** [`CDX6G3F5DS2NUFFXZJ5XQSFHPTG6EKXY5GONXKLFLPNW6U7SVEPZ2RLJ`](https://stellar.expert/explorer/testnet/contract/CDX6G3F5DS2NUFFXZJ5XQSFHPTG6EKXY5GONXKLFLPNW6U7SVEPZ2RLJ)
 - **USDC de prueba:** asset clásico `USDC`, issuer `GDNQJIVKZNQTS4ZGH2W6VJPK4SQP4JIJR4YMWK7UHNOGQNYWN3F2BF3D`, SAC [`CA7IN3NREHPGR2UPBIJX52T4KCXVZVMOCUWC2OBK3T6JXJDSR77WAQGV`](https://stellar.expert/explorer/testnet/contract/CA7IN3NREHPGR2UPBIJX52T4KCXVZVMOCUWC2OBK3T6JXJDSR77WAQGV).
@@ -35,7 +35,7 @@ Hoy muchos remates de arte en Mendoza se hacen por comentarios de Instagram o a 
 
 ## La idea
 
-RematArte convierte cada obra de una muestra en una subasta con respaldo real:
+Artemi convierte cada obra de una muestra en una subasta con respaldo real:
 
 1. **Cada obra tiene su QR.** La persona está frente a una pintura o escultura que le gustó, escanea el código y abre la ficha — sin instalar nada.
 2. **La ficha muestra lo esencial:** foto, título, artista, técnica, hora de cierre, y el estado de la puja. Si nadie ofertó, ve el precio mínimo. Si ya hay ofertas, ve la actual y desde cuánto puede ofertar.

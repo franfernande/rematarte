@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd)"
-WASM_PATH="$REPO_ROOT/contracts/target/wasm32v1-none/release/rematarte_auction.wasm"
+WASM_PATH="$REPO_ROOT/contracts/target/wasm32v1-none/release/artemi_auction.wasm"
 DEPLOY_JSON="$REPO_ROOT/web/data/deploy.testnet.json"
 BINDINGS_ROOT="$REPO_ROOT/contracts/bindings"
 OUTPUT_DIR="$BINDINGS_ROOT/auction"

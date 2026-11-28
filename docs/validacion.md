@@ -1,4 +1,4 @@
-# Validación — RematArte
+# Validación — Artemi
 
 Kit operativo para **C1 — entrevistas** y **C4 — prueba con alguien de afuera**.
 
@@ -6,7 +6,7 @@ Kit operativo para **C1 — entrevistas** y **C4 — prueba con alguien de afuer
 
 ## Antes de salir
 
-- [ ] URL pública de la web: `[COMPLETAR: URL de Vercel cuando G2 la tenga]`.
+- [x] URL pública de la web: https://artemi-arte.vercel.app.
 - [ ] QR o link de la obra usada en la prueba: `[COMPLETAR: slug o URL exacta]`.
 - [ ] Wallet que va a usar la persona: `[COMPLETAR: celu propio con wallet / wallet de demo]`.
 - [ ] Wallet exacta soportada por la versión web a probar: `[COMPLETAR: Albedo / Varial / otra que confirme G2]`.
@@ -59,13 +59,13 @@ Artistas, talleres, rematadores o espacios culturales de Mendoza con experiencia
 
 ### Consentimiento verbal (leer tal cual)
 
-> Hola, soy `[COMPLETAR: nombre de quien entrevista]`, del equipo RematArte. Estamos probando una herramienta para mejorar el cobro de remates de arte y queremos aprender de tu experiencia, no venderte nada. La conversación dura unos 10–15 minutos. No vamos a publicar tu nombre ni citarte con identificación sin tu permiso. ¿Te parece bien empezar? ¿Podemos tomar notas y, si alguna frase nos resulta útil, citarla de forma anónima?
+> Hola, soy `[COMPLETAR: nombre de quien entrevista]`, del equipo Artemi. Estamos probando una herramienta para mejorar el cobro de remates de arte y queremos aprender de tu experiencia, no venderte nada. La conversación dura unos 10–15 minutos. No vamos a publicar tu nombre ni citarte con identificación sin tu permiso. ¿Te parece bien empezar? ¿Podemos tomar notas y, si alguna frase nos resulta útil, citarla de forma anónima?
 
 - Consentimiento: `[COMPLETAR: sí/no, notas sí/no, cita anónima sí/no]`.
 
 ### Reglas para no contaminar respuestas
 
-- Primero preguntar por experiencias reales; recién después explicar RematArte.
+- Primero preguntar por experiencias reales; recién después explicar Artemi.
 - No decir “blockchain”, “contrato inteligente”, “escrow” ni “Stellar” durante la primera parte.
 - No preguntar “¿no te molesta que no paguen?”: dejar que el problema aparezca solo.
 - Anotar frases textuales entre comillas, aunque sean cortas.
@@ -186,7 +186,7 @@ Leer estas dos frases, sin agregar explicación técnica:
 
 Hacerlo **antes** de llamar a la persona:
 
-- [ ] Web disponible en: `[COMPLETAR: URL exacta]`.
+- [x] Web disponible en: https://artemi-arte.vercel.app.
 - [ ] QR impreso o visible apuntando a: `[COMPLETAR: URL exacta de la ficha]`.
 - [ ] Obra/subasta usada: `[COMPLETAR: slug y auction_id]`.
 - [ ] Wallet de la persona definida: `[COMPLETAR: propia / demo1 / demo2 / demo3]`.
