@@ -1,4 +1,4 @@
-# RematArte
+# Artemi
 
 **Subastas de arte en vivo con respaldo real en Stellar.**
 Cada obra de la muestra tiene un QR. Lo escaneás, ves la obra, la puja actual y ofertás en USDC. Tu oferta queda depositada en un contrato: si te superan, te devuelven la plata al instante; si ganás, la artista y el espacio cobran solos. Nadie persigue al ganador para que pague.
@@ -35,7 +35,7 @@ Hoy muchos remates de arte en Mendoza se hacen por comentarios de Instagram o a 
 
 ## La idea
 
-RematArte convierte cada obra de una muestra en una subasta con respaldo real:
+Artemi convierte cada obra de una muestra en una subasta con respaldo real:
 
 1. **Cada obra tiene su QR.** La persona está frente a una pintura o escultura que le gustó, escanea el código y abre la ficha — sin instalar nada.
 2. **La ficha muestra lo esencial:** foto, título, artista, técnica, hora de cierre, y el estado de la puja. Si nadie ofertó, ve el precio mínimo. Si ya hay ofertas, ve la actual y desde cuánto puede ofertar.

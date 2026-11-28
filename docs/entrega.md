@@ -8,7 +8,7 @@ No conocemos los campos exactos del formulario de Apex. No los inventamos: `[COM
 
 | Ítem | Estado / valor | Responsable | Hora objetivo |
 |---|---|---|---|
-| Repo | https://github.com/franfernande/rematarte | [COMPLETAR: responsable] | 22:30 |
+| Repo | https://github.com/franfernande/artemi | [COMPLETAR: responsable] | 22:30 |
 | URL de la app | `[COMPLETAR: URL de Vercel]` | [COMPLETAR: responsable] | 22:30 |
 | Contract ID | `CDX6G3F5DS2NUFFXZJ5XQSFHPTG6EKXY5GONXKLFLPNW6U7SVEPZ2RLJ` | [COMPLETAR: responsable] | 22:30 |
 | Video | `[COMPLETAR: link al video]` | [COMPLETAR: responsable] | 22:30 |
@@ -33,11 +33,11 @@ No conocemos los campos exactos del formulario de Apex. No los inventamos: `[COM
 
 ## Descripción para Apex — 1 línea
 
-RematArte ayuda a artistas, talleres y espacios culturales de Mendoza a rematar obra en muestras con QR: la oferta queda depositada en Stellar, se reembolsa si es superada y se liquida sola.
+Artemi ayuda a artistas, talleres y espacios culturales de Mendoza a rematar obra en muestras con QR: la oferta queda depositada en Stellar, se reembolsa si es superada y se liquida sola.
 
 ## Descripción para Apex — aproximadamente 100 palabras
 
-RematArte resuelve un problema concreto de artistas, talleres y espacios culturales de Mendoza que rematan obra en muestras informales: quien gana muchas veces no paga y la artista queda persiguiendo una transferencia. Cada obra tiene un QR que abre una ficha mobile con la puja actual. Ofertar significa depositar USDC en un contrato inteligente de Stellar: si otra persona supera la oferta, el contrato devuelve el dinero en la misma transacción o lo deja reclamable. Al cierre, la liquidación reparte automáticamente el pago entre artista y espacio según el porcentaje acordado, con extensión anti-sniping y eventos verificables en cadena. El MVP tiene un contrato Soroban desplegado en Testnet y una prueba end-to-end verificada en stellar.expert.
+Artemi resuelve un problema concreto de artistas, talleres y espacios culturales de Mendoza que rematan obra en muestras informales: quien gana muchas veces no paga y la artista queda persiguiendo una transferencia. Cada obra tiene un QR que abre una ficha mobile con la puja actual. Ofertar significa depositar USDC en un contrato inteligente de Stellar: si otra persona supera la oferta, el contrato devuelve el dinero en la misma transacción o lo deja reclamable. Al cierre, la liquidación reparte automáticamente el pago entre artista y espacio según el porcentaje acordado, con extensión anti-sniping y eventos verificables en cadena. El MVP tiene un contrato Soroban desplegado en Testnet y una prueba end-to-end verificada en stellar.expert.
 
 ## Notas para completar a mano
 

@@ -1,4 +1,4 @@
-# Plan de tareas — RematArte
+# Plan de tareas — Artemi
 
 Plan de trabajo para el MVP descrito en el [README](../README.md). Todo en **Stellar Testnet**.
 

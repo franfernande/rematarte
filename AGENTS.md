@@ -1,4 +1,4 @@
-# RematArte — contexto para agentes
+# Artemi — contexto para agentes
 
 Subastas de arte en vivo con USDC en Stellar (hackathon Sin Coordenadas, Eje I Arte).
 Leé primero `README.md`: problema, idea, alcance del MVP y requisitos de entrega.

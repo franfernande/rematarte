@@ -1,4 +1,4 @@
-# Guion de demo y video — RematArte
+# Guion de demo y video — Artemi
 
 Objetivo: que cualquiera del equipo pueda hacer la demo en vivo dentro del pitch (60–90 segundos) y grabar el video de respaldo (~2 minutos) sin improvisar.
 
@@ -12,7 +12,7 @@ La regla de oro: **nada de secret keys en pantalla, en este documento, en el rep
 - Hay tres subastas de muestra creadas desde `scripts/obras.sample.json`: `atardecer-en-uspallata` → `0`, `vinedos-al-sur` → `1`, `cerro-en-calma` → `2`. No son obras reales.
 - El smoke test real ya demostró en Testnet oferta, reembolso, anti-sniping y liquidación; los hashes están en [Plan B](#plan-b-respaldo-con-transacciones-reales).
 - La web todavía está en construcción: no hay URL pública de Vercel ni páginas finales `/obra/[slug]`, `/empezar`, `/qr`. Tampoco está el `web/data/obras.json` real, así que la web usa mocks. Todo lo que dependa de eso queda marcado con la etiqueta visible `COMPLETAR`.
-- Repo: <https://github.com/franfernande/rematarte>.
+- Repo: <https://github.com/franfernande/artemi>.
 
 ## 1. Elenco y dispositivos
 
@@ -54,7 +54,7 @@ Lo hace una persona en su propia máquina, nunca con el proyector compartiendo p
    ```
    Ese comando sí muestra el secret. No lo copies a ningún documento, chat, issue, captura ni variable commiteada.
 3. En Freighter/Varial, usá la opción de importar cuenta con secret key. `[COMPLETAR: pasos exactos según la versión instalada en el celu del equipo]`.
-4. Pegá el secret solo en la wallet, guardá la cuenta con un nombre claro (`RematArte demo1`) y limpiá el portapapeles si el sistema lo permite.
+4. Pegá el secret solo en la wallet, guardá la cuenta con un nombre claro (`Artemi demo1`) y limpiá el portapapeles si el sistema lo permite.
 5. Seleccioná red Testnet y verificá saldo de XLM y USDC antes de la demo.
 6. Repetí con `demo2` en el segundo celu. Si hay un celu de respaldo, repetí también con `demo3`; si no hay, `demo3` queda solo como respaldo para soporte/onboarding, no como reemplazo inmediato en vivo.
 
@@ -291,14 +291,14 @@ Grabar solo cuando existan la URL pública y las pantallas finales. Si se graba 
 | Escena | Tiempo | Plano / imagen | Voz en off | Subtítulo sugerido |
 |---|---:|---|---|---|
 | 1 | 0:00–0:10 | Plano general de la obra en la pared con el QR al lado. `[COMPLETAR: obra real y permiso para mostrarla]` | “Cuando un remate informal depende de una transferencia posterior, la artista puede quedar esperando un pago que no llega.” | “El problema: la promesa de compra no garantiza el cobro” |
-| 2 | 0:10–0:20 | Acercamiento al QR; una mano lo escanea con el celu | “Con RematArte, cada obra tiene un QR. Lo escaneás y entrás a su ficha.” | “Escaneás el QR de la obra” |
+| 2 | 0:10–0:20 | Acercamiento al QR; una mano lo escanea con el celu | “Con Artemi, cada obra tiene un QR. Lo escaneás y entrás a su ficha.” | “Escaneás el QR de la obra” |
 | 3 | 0:20–0:32 | Pantalla del celu con ficha: obra, artista, cierre y puja. `[COMPLETAR: /obra/[slug] implementada por G2]` | “La ficha muestra la puja actual, el mínimo para participar y cuándo cierra.” | “Puja y cierre visibles” |
 | 4 | 0:32–0:48 | Primer plano de la wallet: monto precargado y firma | “Ofertar es depositar. Los USDC quedan retenidos por un contrato en Stellar, no son solo una promesa.” | “Ofertar es depositar” |
 | 5 | 0:48–1:04 | Segundo celu supera la oferta; corte a la wallet del primero | “Si otro postor te supera, recuperás lo tuyo en la misma transacción. Sin pedirlo y sin esperar al cierre.” | “Reembolso instantáneo al ser superado” |
 | 6 | 1:04–1:16 | Ficha cerrada y acción de liquidar. `[COMPLETAR: botón/liquidación B8 implementado por G2]` | “Cuando la subasta cierra, cualquiera puede liquidarla.” | “Liquidación sin perseguir al ganador” |
 | 7 | 1:16–1:35 | stellar.expert con la transacción de liquidación | “El contrato reparte lo recaudado entre la artista y el espacio con el porcentaje fijado antes de empezar.” | “Reparto verificable on-chain” |
 | 8 | 1:35–1:50 | Plano del contrato en stellar.expert y la app abierta | “Todo queda verificable: la puja, el reembolso y el reparto.” | “La puja vive en la cadena” |
-| 9 | 1:50–2:00 | Vuelve el plano de la obra; cierre con título del proyecto | “RematArte: subastas de arte en vivo con respaldo real en Stellar.” | “RematArte” |
+| 9 | 1:50–2:00 | Vuelve el plano de la obra; cierre con título del proyecto | “Artemi: subastas de arte en vivo con respaldo real en Stellar.” | “Artemi” |
 
 Indicaciones de grabación:
 
@@ -325,7 +325,7 @@ Guardar capturas reales, con fecha y red Testnet visibles cuando sea posible:
 - [ ] Captura o clip corto del onboarding del jurado si se usa. `[COMPLETAR: /empezar implementada por G2]`.
 - [ ] Video final exportado. `[COMPLETAR: archivo final del video]`.
 - [ ] Notas de la prueba con alguien de afuera, cuando existan, para `docs/validacion.md`. No inventar ni completar antes de hacerla.
-- [ ] Datos públicos para copiar en Apex: repo <https://github.com/franfernande/rematarte>, contract id `CDX6G3F5DS2NUFFXZJ5XQSFHPTG6EKXY5GONXKLFLPNW6U7SVEPZ2RLJ`, WASM hash `53ffb83a703f879cef1c2c9b4e41907399ddc0145779bb58aadadb99edbb9860`, issuer USDC `GDNQJIVKZNQTS4ZGH2W6VJPK4SQP4JIJR4YMWK7UHNOGQNYWN3F2BF3D`, SAC `CA7IN3NREHPGR2UPBIJX52T4KCXVZVMOCUWC2OBK3T6JXJDSR77WAQGV`, URL de la app `[COMPLETAR: URL de Vercel]`.
+- [ ] Datos públicos para copiar en Apex: repo <https://github.com/franfernande/artemi>, contract id `CDX6G3F5DS2NUFFXZJ5XQSFHPTG6EKXY5GONXKLFLPNW6U7SVEPZ2RLJ`, WASM hash `53ffb83a703f879cef1c2c9b4e41907399ddc0145779bb58aadadb99edbb9860`, issuer USDC `GDNQJIVKZNQTS4ZGH2W6VJPK4SQP4JIJR4YMWK7UHNOGQNYWN3F2BF3D`, SAC `CA7IN3NREHPGR2UPBIJX52T4KCXVZVMOCUWC2OBK3T6JXJDSR77WAQGV`, URL de la app `[COMPLETAR: URL de Vercel]`.
 
 ## 7. Pendientes visibles de este guion
 

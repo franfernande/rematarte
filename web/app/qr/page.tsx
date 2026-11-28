@@ -9,7 +9,7 @@ import "./qr-print.css";
 
 export const metadata: Metadata = {
   title: "Cartelas QR",
-  description: "Cartelas imprimibles con QR para las obras de la muestra RematArte.",
+  description: "Cartelas imprimibles con QR para las obras de la muestra Artemi.",
 };
 
 const cierreFormat = new Intl.DateTimeFormat("es-AR", {

@@ -1,11 +1,11 @@
-# Pitch de 3 minutos — RematArte
+# Pitch de 3 minutos — Artemi
 
-**Frase de una línea:** RematArte convierte cada obra de una muestra en una subasta con respaldo real: ofertar es depositar, perder es recuperar la plata al instante y ganar significa que el pago ya está depositado y se liquida solo.
+**Frase de una línea:** Artemi convierte cada obra de una muestra en una subasta con respaldo real: ofertar es depositar, perder es recuperar la plata al instante y ganar significa que el pago ya está depositado y se liquida solo.
 
 > «La obra cuelga en la pared. La puja vive en la cadena.»
 
 **Equipo:** Fran Fernández, Antonio Chocobar y Sebastián Villarreal.  
-**Repo:** <https://github.com/franfernande/rematarte>  
+**Repo:** <https://github.com/franfernande/artemi>  
 **Evento:** Hackathon Sin Coordenadas | Argentina (BAF × Stellar, ToraBlock, FLAT), Eje I Arte.
 
 ## Antes de presentar
@@ -172,7 +172,7 @@ En el contrato actual no hay una función para que el admin retire fondos de una
 
 ## Recomendaciones para las slides
 
-1. **RematArte** — frase de una línea + lema + QR grande de entrada a la demo.
+1. **Artemi** — frase de una línea + lema + QR grande de entrada a la demo.
 2. **El problema: ganar no es pagar** — remate informal por Instagram/mano alzada + `[COMPLETAR: dato de docs/validacion.md — cifra, testimonio o caso concreto de impago en remates informales]`.
 3. **Para quién** — artistas, talleres y espacios culturales de Mendoza durante una muestra real.
 4. **Cómo funciona en 4 pasos** — QR/ficha → ofertar es depositar → reembolso instantáneo → liquidación con reparto fijo.

@@ -26,8 +26,8 @@ const instrumentSerif = Instrument_Serif({
 
 export const metadata: Metadata = {
   title: {
-    default: "RematArte · Subastas de arte en vivo",
-    template: "%s · RematArte",
+    default: "Artemi · Subastas de arte en vivo",
+    template: "%s · Artemi",
   },
   description: "Subastas de arte en vivo con USDC en Stellar. Escaneá el QR de la obra y ofertá desde el celu.",
 };
@@ -50,8 +50,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <WalletProvider networkPassphrase={networkPassphrase}>
           <header className="sticky top-0 z-30 border-b border-linea/80 bg-cal/85 backdrop-blur-md">
             <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-5">
-              <Link href="/" className="font-serif text-[1.65rem] leading-none tracking-tight" aria-label="RematArte, inicio">
-                Remat<em className="text-malbec">Arte</em>
+              <Link href="/" className="font-serif text-[1.65rem] leading-none tracking-tight" aria-label="Artemi, inicio">
+                Arte<em className="text-malbec">mi</em>
               </Link>
               <nav className="flex items-center gap-1 sm:gap-3">
                 <Link

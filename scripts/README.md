@@ -1,6 +1,6 @@
 # Scripts de deploy Testnet
 
-Scripts de G1 para preparar USDC de prueba y desplegar RematArte en Stellar Testnet. Requieren `stellar` CLI 30, `node`, `curl` y `bash`. No usan `jq` ni archivos `.env`.
+Scripts de G1 para preparar USDC de prueba y desplegar Artemi en Stellar Testnet. Requieren `stellar` CLI 30, `node`, `curl` y `bash`. No usan `jq` ni archivos `.env`.
 
 ## 1. Preparar identidades y USDC
 

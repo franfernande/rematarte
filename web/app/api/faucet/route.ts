@@ -23,15 +23,15 @@ type RateLimitStore = {
 };
 
 const globalWithRateLimit = globalThis as typeof globalThis & {
-  __rematarteFaucetRateLimit?: RateLimitStore;
+  __artemiFaucetRateLimit?: RateLimitStore;
 };
 
 function getRateLimitStore(): RateLimitStore {
-  globalWithRateLimit.__rematarteFaucetRateLimit ??= {
+  globalWithRateLimit.__artemiFaucetRateLimit ??= {
     byAddress: new Map<string, number>(),
     byIp: new Map<string, number[]>(),
   };
-  return globalWithRateLimit.__rematarteFaucetRateLimit;
+  return globalWithRateLimit.__artemiFaucetRateLimit;
 }
 
 function pruneStore(store: RateLimitStore, now: number) {
@@ -136,7 +136,7 @@ function paymentFailureResponse(errorUnknown: unknown): Response {
 export async function POST(request: NextRequest) {
   const origin = request.headers.get("origin");
   if (origin && origin !== request.nextUrl.origin) {
-    return error(403, "Este faucet solo responde a la web de RematArte.");
+    return error(403, "Este faucet solo responde a la web de Artemi.");
   }
 
   let body: unknown;
