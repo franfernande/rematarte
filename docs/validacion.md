@@ -6,7 +6,7 @@ Kit operativo para **C1 — entrevistas** y **C4 — prueba con alguien de afuer
 
 ## Antes de salir
 
-- [ ] URL pública de la web: `[COMPLETAR: URL de Vercel cuando G2 la tenga]`.
+- [x] URL pública de la web: https://artemi-arte.vercel.app.
 - [ ] QR o link de la obra usada en la prueba: `[COMPLETAR: slug o URL exacta]`.
 - [ ] Wallet que va a usar la persona: `[COMPLETAR: celu propio con wallet / wallet de demo]`.
 - [ ] Wallet exacta soportada por la versión web a probar: `[COMPLETAR: Albedo / Varial / otra que confirme G2]`.
@@ -186,7 +186,7 @@ Leer estas dos frases, sin agregar explicación técnica:
 
 Hacerlo **antes** de llamar a la persona:
 
-- [ ] Web disponible en: `[COMPLETAR: URL exacta]`.
+- [x] Web disponible en: https://artemi-arte.vercel.app.
 - [ ] QR impreso o visible apuntando a: `[COMPLETAR: URL exacta de la ficha]`.
 - [ ] Obra/subasta usada: `[COMPLETAR: slug y auction_id]`.
 - [ ] Wallet de la persona definida: `[COMPLETAR: propia / demo1 / demo2 / demo3]`.
