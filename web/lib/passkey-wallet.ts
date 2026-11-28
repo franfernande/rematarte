@@ -17,10 +17,10 @@ export type StoredWalletSession = {
 
 export type PrfSupport = "unknown" | "supported" | "unsupported";
 
-const SESSION_STORAGE_KEY = "rematarte.local-wallet";
-const DEVICE_SECRET_STORAGE_KEY = "rematarte.device-wallet-secret";
-const SALT_INPUT = "rematarte/stellar/v1";
-const SEED_SUFFIX = "rematarte-stellar-seed-v1";
+const SESSION_STORAGE_KEY = "artemi.local-wallet";
+const DEVICE_SECRET_STORAGE_KEY = "artemi.device-wallet-secret";
+const SALT_INPUT = "artemi/stellar/v1";
+const SEED_SUFFIX = "artemi-stellar-seed-v1";
 const textEncoder = new TextEncoder();
 
 export class PasskeyWalletError extends Error {
@@ -171,11 +171,11 @@ export async function createPasskeyWallet(): Promise<LocalWallet> {
   try {
     credential = (await navigator.credentials.create({
       publicKey: {
-        rp: { name: "RematArte" },
+        rp: { name: "Artemi" },
         user: {
           id: exactArrayBuffer(userId),
           name: `visitante-${base64UrlEncode(userId)}`,
-          displayName: "Visitante de RematArte",
+          displayName: "Visitante de Artemi",
         },
         challenge: exactArrayBuffer(randomBytes(32)),
         pubKeyCredParams: [

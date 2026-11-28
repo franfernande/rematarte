@@ -9,7 +9,7 @@ cd "$ROOT_DIR"
 source "$SCRIPT_DIR/lib/common.sh"
 
 DRY_RUN="${DRY_RUN:-0}"
-WASM_PATH="contracts/target/wasm32v1-none/release/rematarte_auction.wasm"
+WASM_PATH="contracts/target/wasm32v1-none/release/artemi_auction.wasm"
 DEPLOY_JSON="web/data/deploy.testnet.json"
 
 addr_or_placeholder() {
@@ -79,7 +79,7 @@ main() {
   local invoke_out auction_id
   local mapping_lines=()
 
-  echo "== Deploy RematArte en Stellar Testnet =="
+  echo "== Deploy Artemi en Stellar Testnet =="
   if [[ "$DRY_RUN" == "1" ]]; then
     echo "Modo DRY_RUN: se imprimen los comandos, sin ejecutar transacciones ni escribir archivos."
     print_cmd bash scripts/setup-usdc.sh

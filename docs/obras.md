@@ -27,7 +27,7 @@ Reglas de conjunto: el archivo es un array JSON; para el deploy no puede estar v
 
 Texto corto sugerido para enviar y guardar respuesta afirmativa:
 
-> Autorizo a mostrar la obra `[COMPLETAR: título]` en la demo de RematArte durante la hackathon Sin Coordenadas, incluyendo foto, título, técnica, medidas, año, descripción y mi nombre público. Entiendo que la subasta se publica en Stellar Testnet con USDC de prueba y que no constituye una venta real ni genera obligación de entregar la obra `[COMPLETAR si el equipo decide venta real]`.
+> Autorizo a mostrar la obra `[COMPLETAR: título]` en la demo de Artemi durante la hackathon Sin Coordenadas, incluyendo foto, título, técnica, medidas, año, descripción y mi nombre público. Entiendo que la subasta se publica en Stellar Testnet con USDC de prueba y que no constituye una venta real ni genera obligación de entregar la obra `[COMPLETAR si el equipo decide venta real]`.
 
 Guardar como evidencia: captura o copia de la autorización, fecha, nombre de contacto y aclaración final sobre venta real o no. No inventar autorizaciones ni subir datos de una obra sin consentimiento explícito.
 

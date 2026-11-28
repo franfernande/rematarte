@@ -33,7 +33,7 @@ export async function loginWithDeviceAccount(page: Page): Promise<string> {
   // The dialog also says "¡Listo!" when preparation failed, with a 0 USDC balance and the reason.
   await expect(dialog.getByText(/Saldo de prueba: 200(,0+)? USDC/), "la cuenta no recibió los 200 USDC de prueba").toBeVisible();
   const address = await page.evaluate(() => {
-    const raw = localStorage.getItem("rematarte.local-wallet");
+    const raw = localStorage.getItem("artemi.local-wallet");
     return raw ? (JSON.parse(raw) as { publicKey: string }).publicKey : null;
   });
   expect(address).toMatch(/^G[A-Z2-7]{55}$/);

@@ -1,4 +1,4 @@
-# Validación — RematArte
+# Validación — Artemi
 
 Kit operativo para **C1 — entrevistas** y **C4 — prueba con alguien de afuera**.
 
@@ -59,13 +59,13 @@ Artistas, talleres, rematadores o espacios culturales de Mendoza con experiencia
 
 ### Consentimiento verbal (leer tal cual)
 
-> Hola, soy `[COMPLETAR: nombre de quien entrevista]`, del equipo RematArte. Estamos probando una herramienta para mejorar el cobro de remates de arte y queremos aprender de tu experiencia, no venderte nada. La conversación dura unos 10–15 minutos. No vamos a publicar tu nombre ni citarte con identificación sin tu permiso. ¿Te parece bien empezar? ¿Podemos tomar notas y, si alguna frase nos resulta útil, citarla de forma anónima?
+> Hola, soy `[COMPLETAR: nombre de quien entrevista]`, del equipo Artemi. Estamos probando una herramienta para mejorar el cobro de remates de arte y queremos aprender de tu experiencia, no venderte nada. La conversación dura unos 10–15 minutos. No vamos a publicar tu nombre ni citarte con identificación sin tu permiso. ¿Te parece bien empezar? ¿Podemos tomar notas y, si alguna frase nos resulta útil, citarla de forma anónima?
 
 - Consentimiento: `[COMPLETAR: sí/no, notas sí/no, cita anónima sí/no]`.
 
 ### Reglas para no contaminar respuestas
 
-- Primero preguntar por experiencias reales; recién después explicar RematArte.
+- Primero preguntar por experiencias reales; recién después explicar Artemi.
 - No decir “blockchain”, “contrato inteligente”, “escrow” ni “Stellar” durante la primera parte.
 - No preguntar “¿no te molesta que no paguen?”: dejar que el problema aparezca solo.
 - Anotar frases textuales entre comillas, aunque sean cortas.

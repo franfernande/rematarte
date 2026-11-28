@@ -61,7 +61,7 @@ export function QrCard({
       </div>
 
       <footer className="mt-6 border-t border-linea pt-3 text-xs tracking-wide text-piedra">
-        RematArte · Stellar Testnet · USDC de prueba
+        Artemi · Stellar Testnet · USDC de prueba
       </footer>
     </article>
   );
